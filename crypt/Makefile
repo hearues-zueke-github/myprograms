@@ -1,5 +1,5 @@
-SOURCE = crypt2.c
-BINARY=crypt2withoutprintf
+SOURCE = crypt3.c
+BINARY = crypt3
 
 CC = gcc
 CFLAGS = -Wall -o
