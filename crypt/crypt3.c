@@ -17,7 +17,7 @@
 #define B6 0x3F
 #define B7 0x7F
 #define B8 0xFF
-// IMPORTANT !!!!
+// VERY IMPORTANT !!!! Matrix Size!
 #define MS 4
 
 #define ERR_WRONG_USAGE 1
@@ -27,9 +27,10 @@
 
 void waitForEnter();
 size_t fileSize(FILE *file);
+void printArrayOneDimension(unsigned char *array, int array_length);
 
 //// Short function overview of the (en/de)cryption of this program:
-//// The Matrix will be mixed by 2 Bytestime
+//// The Matrix will be mixed by 4 Bytes
 //// mode,row1,row2,row3,dimension,
 //// 1st byte: e.g. 10010111
 ////              0b10 is the crypt mode
@@ -40,22 +41,28 @@ size_t fileSize(FILE *file);
 ////              0b01 is the line dimenion, in which line this will happen
 ////                0b1 is the direction, which will be crypted
 ////                 0b10110 is the value for the (en/de)cryption
-void encryption(char matrix[MS][MS][MS][MS], char *crypt, int crypt_length);
-void decryption(char matrix[MS][MS][MS][MS], char *crypt, int crypt_length);
+void encryption(unsigned char matrix[MS][MS][MS][MS], unsigned char *crypt, int crypt_length);
+void decryption(unsigned char matrix[MS][MS][MS][MS], unsigned char *crypt, int crypt_length);
 
-void increment(char matrix[MS][MS][MS][MS], int b1, int b2, int b3, int b4);
-void decrement(char matrix[MS][MS][MS][MS], int b1, int b2, int b3, int b4);
-void shift(char matrix[MS][MS][MS][MS], int b1, int b2, int b3, int b4);
-void invert(char matrix[MS][MS][MS][MS], int b1, int b2, int b3, int b4);
+void incrementencryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int b3, int b4);
+void decrementencryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int b3, int b4);
+void shiftencryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int b3, int b4);
+void invertencryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int b3, int b4);
 
-void (*functions[])(char [MS][MS][MS][MS], int, int, int, int) = {&increment, &decrement, &shift, &invert};
+void incrementdecryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int b3, int b4);
+void decrementdecryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int b3, int b4);
+void shiftdecryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int b3, int b4);
+void invertdecryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int b3, int b4);
+
+void (*functionsencryption[])(unsigned char [MS][MS][MS][MS], int, int, int, int) = {&incrementencryption, &decrementencryption, &shiftencryption, &invertencryption};
+void (*functionsdecryption[])(unsigned char [MS][MS][MS][MS], int, int, int, int) = {&incrementdecryption, &decrementdecryption, &shiftdecryption, &invertdecryption};
 
 int main (int argc, char **argv)
 {
   int flag_cryptmodus;
   int flag_output_status = 1;
-  char matrix[MS][MS][MS][MS];
-  char crypt[4194304];
+  unsigned char crypt[4194304];
+  unsigned char matrix[MS][MS][MS][MS];
   int file_crypt_size;
   long long file_in_size;
   long long file_in_position;
@@ -105,7 +112,7 @@ int main (int argc, char **argv)
     while (loop_file < argc) {
       FILE *file_in = fopen(argv[loop_file], "rb");
       system("[ -d encryption_files ] || mkdir encryption_files\n");
-      char filenamedest[strlen(argv[loop_file]) + 8];
+      char filenamedest[strlen(argv[loop_file]) + 19];
       strcpy(filenamedest, "encryption_files/");
       strcat(filenamedest, argv[loop_file]);
       FILE *file_out = fopen(filenamedest, "wb");
@@ -159,18 +166,17 @@ int main (int argc, char **argv)
     while (loop_file < argc) {
       FILE *file_in = fopen(argv[loop_file], "rb");
       system("[ -d decryption_files ] || mkdir decryption_files\n");
-      char filenamedest[strlen(argv[loop_file]) + 8];
+      char filenamedest[strlen(argv[loop_file]) + 19];
       strcpy(filenamedest, "decryption_files/");
       strcat(filenamedest, argv[loop_file]);
       FILE *file_out = fopen(filenamedest, "wb");
       if (file_in != NULL) {
         file_in_size = fileSize(file_in);
         int file_size_number = 0;
-        int shift = 8;
-        while (shift > 0)
+        int shift;
+        for (shift = 8; shift > 0; shift--)
         {
           file_size_number += (fgetc(file_in) & 0xFF) << (8 * (shift - 1));
-          shift--;
         }
         file_in_position = file_in_size - 8;
         if (file_in_position >= file_size_number) {
@@ -178,16 +184,16 @@ int main (int argc, char **argv)
             int pos = 0;
             // read in
             for(; (pos < (MS*MS*MS*MS)) && (file_in_position - pos > 0); pos++) {
-              matrix[pos / (MS*MS*MS)][pos / (MS*MS)][pos / MS][pos % MS] = fgetc(file_in);
+              matrix[(pos / (MS*MS*MS)) % MS][(pos / (MS*MS)) % MS][(pos / MS) % MS][pos % MS] = fgetc(file_in);
             }
             // decrypt algorithm
-
+            decryption(matrix, crypt, file_crypt_size);
             // write out
             file_in_position -= pos;
             if (pos > 0) {
               int loop = 0;
               while (loop < pos) {
-                fputc(matrix[pos / (MS*MS*MS)][pos / (MS*MS)][pos / MS][pos % MS], file_out);
+                fputc(matrix[(loop / (MS*MS*MS)) % MS][(loop / (MS*MS)) % MS][(loop / MS) % MS][loop % MS], file_out);
                 loop++;
               }
             }
@@ -225,8 +231,17 @@ size_t fileSize(FILE *file)
   fseek(file, SEEK_SET, offset);
   return size;
 }
+void printArrayOneDimension(unsigned char *array, int array_length)
+{
+  int loop;
+  printf("Print the array:\n");
+  for (loop = 0; loop < array_length; loop++)
+  {
+    printf("array[%d] = %d\n", loop, array[loop]);
+  }
+}
 
-void encryption(char matrix[MS][MS][MS][MS], char *crypt, int crypt_length)
+void encryption(unsigned char matrix[MS][MS][MS][MS], unsigned char *crypt, int crypt_length)
 {
   int b1; int b2; int b3; int b4;
   int loop = 0;
@@ -236,172 +251,291 @@ void encryption(char matrix[MS][MS][MS][MS], char *crypt, int crypt_length)
     b2 = crypt[loop + 1];
     b3 = crypt[loop + 2];
     b4 = crypt[loop + 3];
+    //printf("%d  %d  %d  %d\n", loop, loop+1, loop+2, loop+3);
+    //printf("%02x  %02x  %02x  %02x\n", b1&B8, b2&B8, b3&B8, b4&B8);
+    //printf("%d\n", (b1 >> 6) & B2);
     switch ((b1 >> 6) & B2)
     {
-      case 0: functions[0](matrix, b1, b2, b3, b4); break;
-      case 1: functions[1](matrix, b1, b2, b3, b4); break;
-      case 2: functions[2](matrix, b1, b2, b3, b4); break;
-      case 3: functions[3](matrix, b1, b2, b3, b4); break;
+      case 0: functionsencryption[0](matrix, b1, b2, b3, b4); break;
+      case 1: functionsencryption[1](matrix, b1, b2, b3, b4); break;
+      case 2: functionsencryption[2](matrix, b1, b2, b3, b4); break;
+      case 3: functionsencryption[3](matrix, b1, b2, b3, b4); break;
     }
     loop += 4;
   }
 }
-void decryption(char matrix[MS][MS][MS][MS], char *crypt, int crypt_length)
+void decryption(unsigned char matrix[MS][MS][MS][MS], unsigned char *crypt, int crypt_length)
 {
-
+  int b1; int b2; int b3; int b4;
+  int loop = 0;
+  loop = (crypt_length / 4) * 4 - 3;
+  while (loop > 0)
+  {
+    b1 = crypt[(loop - 1)];
+    b2 = crypt[(loop - 1) + 1];
+    b3 = crypt[(loop - 1) + 2];
+    b4 = crypt[(loop - 1) + 3];
+    //printf("%d  %d  %d  %d\n", (loop-1), (loop-1)+1, (loop-1)+2, (loop-1)+3);
+    //printf("%02x  %02x  %02x  %02x\n", b1&B8, b2&B8, b3&B8, b4&B8);
+    //printf("%d\n", (b1 >> 6) & B2);
+    switch ((b1 >> 6) & B2)
+    {
+      case 0: functionsdecryption[1](matrix, b1, b2, b3, b4); break;
+      case 1: functionsdecryption[0](matrix, b1, b2, b3, b4); break;
+      case 2: functionsdecryption[2](matrix, b1, b2, b3, b4); break;
+      case 3: functionsdecryption[3](matrix, b1, b2, b3, b4); break;
+    }
+    loop -= 4;
+  }
 }
 
-void increment(char matrix[MS][MS][MS][MS], int b1, int b2, int b3, int b4)
+void incrementencryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int b3, int b4)
 {
-  int row1,  row2, row3;
-  int direction, dim1, dim2, dim3;
-  int jumper, shifter, multiplier;
-  int value;
+  printf("INCREMENT ENCRYPT!\n");
+  unsigned char row1,  row2, row3;
+  unsigned char direction, dim1, dim2, dim3;
+  unsigned char jumper, shifter, multiplier;
+  unsigned char value, value_temp, value_temp2;
   row1 = (b1 >> 4) & B2; row2 = (b1 >> 2) & B2; row3 = (b1 >> 0) & B2;
   direction = (b2 >> 7) & B1; dim1 = (b2 >> 5) & B2; dim2 = (b2 >> 2) & B3; dim3 = (b2 >> 0) & B2;
   jumper = (b3 >> 5) & B3; shifter = (b3 >> 2) & B3; multiplier = (b3 >> 0) & B2;
   value = b4 & B8;
-  int loop1,loop2, loop3;
-  if (direction == 0)
+  unsigned char loop1,loop2, loop3, loopm;
+  value_temp = 0;
+  for (loopm = 0; loopm < multiplier; loopm++)
   {
-    // 1st Dimension
-    for (loop = 0; loop < MS; loop++)
+    value_temp = (value + (value_temp >> shifter) + (value_temp << shifter)) & B8;
+    if (direction == 0)
     {
-      switch (dim1)
+      // 1st Dimension
+      for (loop1 = 0; loop1 < MS; loop1++)
       {
-        case 0: matrix[row1][row2][row3][loop] = matrix[row1][row2][row3][loop] + (value & 0xFF); break;
-        case 1: matrix[row1][row2][loop][row3] = matrix[row1][row2][loop][row3] + (value & 0xFF); break;
-        case 2: matrix[row1][loop][row2][row3] = matrix[row1][loop][row2][row3] + (value & 0xFF); break;
-        case 3: matrix[loop][row1][row2][row3] = matrix[loop][row1][row2][row3] + (value & 0xFF); break;
-      }
-    }
-    // 2nd Dimension
-    for (loop1 = 0; loop1 < MS; loop1++)
-    {
-      for (loop2 = 0; loop2 < MS; loop2++)
-      {
-        switch (dim2)
+        value_temp2 = (value_temp + loop1 * jumper + loopm) & B8;
+        switch (dim1)
         {
-          case 6:
-          case 0: matrix[row1][row2][loop1][loop2] = matrix[row1][row2][loop1][loop2] + (value & 0xFF); break;
-          case 1: matrix[row1][loop1][row2][loop2] = matrix[row1][loop1][row2][loop2] + (value & 0xFF); break;
-          case 2: matrix[row1][loop1][loop2][row2] = matrix[row1][loop1][loop2][row2] + (value & 0xFF); break;
-          case 3: matrix[loop1][row1][row2][loop2] = matrix[loop1][row1][row2][loop2] + (value & 0xFF); break;
-          case 4: matrix[loop1][row1][loop2][row2] = matrix[loop1][row1][loop2][row2] + (value & 0xFF); break;
-          case 7:
-          case 5: matrix[loop1][loop2][row1][row2] = matrix[loop1][loop2][row1][row2] + (value & 0xFF); break;
+          case 0: matrix[row1][row2][row3][loop1] = matrix[row1][row2][row3][loop1] + value_temp2; break;
+          case 1: matrix[row1][row2][loop1][row3] = matrix[row1][row2][loop1][row3] + value_temp2; break;
+          case 2: matrix[row1][loop1][row2][row3] = matrix[row1][loop1][row2][row3] + value_temp2; break;
+          case 3: matrix[loop1][row1][row2][row3] = matrix[loop1][row1][row2][row3] + value_temp2; break;
         }
       }
-    }
-    // 3rd Dimension
-    for (loop1 = 0; loop1 < MS; loop1++)
-    {
-      for (loop2 = 0; loop2 < MS; loop2++)
+      // 2nd Dimension
+      for (loop1 = 0; loop1 < MS; loop1++)
       {
-        for (loop3 = 0; loop3 < MS; loop3++)
+        for (loop2 = 0; loop2 < MS; loop2++)
         {
-          switch (dim3)
+          value_temp2 = (value_temp + (loop1 + loop2) * jumper + loopm) & B8;
+          switch (dim2)
           {
-            case 0: matrix[row1][loop1][loop2][loop3] = matrix[row1][loop1][loop2][loop3] + (value & 0xFF); break;
-            case 1: matrix[loop1][row1][loop2][loop3] = matrix[loop1][row1][loop2][loop3] + (value & 0xFF); break;
-            case 2: matrix[loop1][loop2][row1][loop3] = matrix[loop1][loop2][row1][loop3] + (value & 0xFF); break;
-            case 3: matrix[loop1][loop2][loop3][row1] = matrix[loop1][loop2][loop3][row1] + (value & 0xFF); break;
+            case 6:
+            case 0: matrix[row1][row2][loop1][loop2] = matrix[row1][row2][loop1][loop2] + value_temp2; break;
+            case 1: matrix[row1][loop1][row2][loop2] = matrix[row1][loop1][row2][loop2] + value_temp2; break;
+            case 2: matrix[row1][loop1][loop2][row2] = matrix[row1][loop1][loop2][row2] + value_temp2; break;
+            case 3: matrix[loop1][row1][row2][loop2] = matrix[loop1][row1][row2][loop2] + value_temp2; break;
+            case 4: matrix[loop1][row1][loop2][row2] = matrix[loop1][row1][loop2][row2] + value_temp2; break;
+            case 7:
+            case 5: matrix[loop1][loop2][row1][row2] = matrix[loop1][loop2][row1][row2] + value_temp2; break;
           }
         }
       }
-    }
-  }
-  else if (direction == 1)
-  {
-    // 1st Dimension
-    for (loop = MS; loop >= 0; loop--)
-    {
-      switch (dim1)
+      // 3rd Dimension
+      for (loop1 = 0; loop1 < MS; loop1++)
       {
-        case 0: matrix[row1][row2][row3][loop - 1] = matrix[row1][row2][row3][loop - 1] + (value & 0xFF); break;
-        case 1: matrix[row1][row2][loop - 1][row3] = matrix[row1][row2][loop - 1][row3] + (value & 0xFF); break;
-        case 2: matrix[row1][loop - 1][row2][row3] = matrix[row1][loop - 1][row2][row3] + (value & 0xFF); break;
-        case 3: matrix[loop - 1][row1][row2][row3] = matrix[loop - 1][row1][row2][row3] + (value & 0xFF); break;
-      }
-    }
-    // 2nd Dimension
-    for (loop1 = MS; loop1 > 0; loop1--)
-    {
-      for (loop2 = MS; loop2 > 0; loop2--)
-      {
-        switch (dim2)
+        for (loop2 = 0; loop2 < MS; loop2++)
         {
-          case 6:
-          case 0: matrix[row1][row2][loop1 - 1][loop2 - 1] = matrix[row1][row2][loop1 - 1][loop2 - 1] + (value & 0xFF); break;
-          case 1: matrix[row1][loop1 - 1][row2][loop2 - 1] = matrix[row1][loop1 - 1][row2][loop2 - 1] + (value & 0xFF); break;
-          case 2: matrix[row1][loop1 - 1][loop2 - 1][row2] = matrix[row1][loop1 - 1][loop2 - 1][row2] + (value & 0xFF); break;
-          case 3: matrix[loop1 - 1][row1][row2][loop2 - 1] = matrix[loop1 - 1][row1][row2][loop2 - 1] + (value & 0xFF); break;
-          case 4: matrix[loop1 - 1][row1][loop2 - 1][row2] = matrix[loop1 - 1][row1][loop2 - 1][row2] + (value & 0xFF); break;
-          case 7:
-          case 5: matrix[loop1 - 1][loop2 - 1][row1][row2] = matrix[loop1 - 1][loop2 - 1][row1][row2] + (value & 0xFF); break;
-        }
-      }
-    }
-    // 3rd Dimension
-    for (loop1 = MS; loop1 > 0; loop1--)
-    {
-      for (loop2 = MS; loop2 > 0; loop2--)
-      {
-        for (loop3 = MS; loop3 > 0; loop3--)
-        {
-          switch (dim3)
+          for (loop3 = 0; loop3 < MS; loop3++)
           {
-            case 0: matrix[row1][loop1 - 1][loop2 - 1][loop3 - 1] = matrix[row1][loop1 - 1][loop2 - 1][loop3 - 1] + (value & 0xFF); break;
-            case 1: matrix[loop1 - 1][row1][loop2 - 1][loop3 - 1] = matrix[loop1 - 1][row1][loop2 - 1][loop3 - 1] + (value & 0xFF); break;
-            case 2: matrix[loop1 - 1][loop2 - 1][row1][loop3 - 1] = matrix[loop1 - 1][loop2 - 1][row1][loop3 - 1] + (value & 0xFF); break;
-            case 3: matrix[loop1 - 1][loop2 - 1][loop3 - 1][row1] = matrix[loop1 - 1][loop2 - 1][loop3 - 1][row1] + (value & 0xFF); break;
+            value_temp2 = (value_temp + (loop1 + loop2 + loop3) * jumper + loopm) & B8;
+            switch (dim3)
+            {
+              case 0: matrix[row1][loop1][loop2][loop3] = matrix[row1][loop1][loop2][loop3] + value_temp2; break;
+              case 1: matrix[loop1][row1][loop2][loop3] = matrix[loop1][row1][loop2][loop3] + value_temp2; break;
+              case 2: matrix[loop1][loop2][row1][loop3] = matrix[loop1][loop2][row1][loop3] + value_temp2; break;
+              case 3: matrix[loop1][loop2][loop3][row1] = matrix[loop1][loop2][loop3][row1] + value_temp2; break;
+            }
           }
         }
       }
-    }
-  }
-}
-void decrement(char matrix[MS][MS][MS][MS], int b1, int b2, int b3, int b4)
-{
-  int row1; int row2; int row3;
-  int dimension; int direction; int value;
-  row1 = (b1 >> 4) & B2;
-  row2 = (b1 >> 2) & B2;
-  row3 = (b1 >> 0) & B2;
-  dimension = (b2 >> 6) & B2;
-  direction = (b2 >> 5) & B1;
-  value = b2 & B5;
-  if (direction == 0)
-  {
-    int loop = 0;
-    for (; loop < MS; loop++)
+    } // end if
+    else if (direction == 1)
     {
-      switch (dimension)
+      // 1st Dimension
+      for (loop1 = MS; loop1 > 0; loop1--)
       {
-        case 0: matrix[row1][row2][row3][loop] = matrix[row1][row2][row3][loop] - (value & 0xFF); break;
-        case 1: matrix[row1][row2][loop][row3] = matrix[row1][row2][loop][row3] - (value & 0xFF); break;
-        case 2: matrix[row1][loop][row2][row3] = matrix[row1][loop][row2][row3] - (value & 0xFF); break;
-        case 3: matrix[loop][row1][row2][row3] = matrix[loop][row1][row2][row3] - (value & 0xFF); break;
+        value_temp2 = (value_temp + (loop1 - 1) * jumper + loopm) & B8;
+        switch (dim1)
+        {
+          case 0: matrix[row1][row2][row3][loop1 - 1] = matrix[row1][row2][row3][loop1 - 1] + value_temp2; break;
+          case 1: matrix[row1][row2][loop1 - 1][row3] = matrix[row1][row2][loop1 - 1][row3] + value_temp2; break;
+          case 2: matrix[row1][loop1 - 1][row2][row3] = matrix[row1][loop1 - 1][row2][row3] + value_temp2; break;
+          case 3: matrix[loop1 - 1][row1][row2][row3] = matrix[loop1 - 1][row1][row2][row3] + value_temp2; break;
+        }
       }
-    }
-  }
-  else if (direction == 1)
-  {
-    int loop = MS;
-    for (; loop >= 0; loop--)
-    {
-      switch (dimension)
+      // 2nd Dimension
+      for (loop1 = MS; loop1 > 0; loop1--)
       {
-        case 0: matrix[row1][row2][row3][loop - 1] = matrix[row1][row2][row3][loop - 1] - (value & 0xFF); break;
-        case 1: matrix[row1][row2][loop - 1][row3] = matrix[row1][row2][loop - 1][row3] - (value & 0xFF); break;
-        case 2: matrix[row1][loop - 1][row2][row3] = matrix[row1][loop - 1][row2][row3] - (value & 0xFF); break;
-        case 3: matrix[loop - 1][row1][row2][row3] = matrix[loop - 1][row1][row2][row3] - (value & 0xFF); break;
+        for (loop2 = MS; loop2 > 0; loop2--)
+        {
+          value_temp2 = (value_temp + (loop1 - 1 + loop2 - 1) * jumper + loopm) & B8;
+          switch (dim2)
+          {
+            case 6:
+            case 0: matrix[row1][row2][loop1 - 1][loop2 - 1] = matrix[row1][row2][loop1 - 1][loop2 - 1] + value_temp2; break;
+            case 1: matrix[row1][loop1 - 1][row2][loop2 - 1] = matrix[row1][loop1 - 1][row2][loop2 - 1] + value_temp2; break;
+            case 2: matrix[row1][loop1 - 1][loop2 - 1][row2] = matrix[row1][loop1 - 1][loop2 - 1][row2] + value_temp2; break;
+            case 3: matrix[loop1 - 1][row1][row2][loop2 - 1] = matrix[loop1 - 1][row1][row2][loop2 - 1] + value_temp2; break;
+            case 4: matrix[loop1 - 1][row1][loop2 - 1][row2] = matrix[loop1 - 1][row1][loop2 - 1][row2] + value_temp2; break;
+            case 7:
+            case 5: matrix[loop1 - 1][loop2 - 1][row1][row2] = matrix[loop1 - 1][loop2 - 1][row1][row2] + value_temp2; break;
+          }
+        }
       }
-    }
-  }
+      // 3rd Dimension
+      for (loop1 = MS; loop1 > 0; loop1--)
+      {
+        for (loop2 = MS; loop2 > 0; loop2--)
+        {
+          for (loop3 = MS; loop3 > 0; loop3--)
+          {
+            value_temp2 = (value_temp + (loop1 - 1 + loop2 - 1 + loop3 - 1) * jumper + loopm) & B8;
+            switch (dim3)
+            {
+              case 0: matrix[row1][loop1 - 1][loop2 - 1][loop3 - 1] = matrix[row1][loop1 - 1][loop2 - 1][loop3 - 1] + value_temp2; break;
+              case 1: matrix[loop1 - 1][row1][loop2 - 1][loop3 - 1] = matrix[loop1 - 1][row1][loop2 - 1][loop3 - 1] + value_temp2; break;
+              case 2: matrix[loop1 - 1][loop2 - 1][row1][loop3 - 1] = matrix[loop1 - 1][loop2 - 1][row1][loop3 - 1] + value_temp2; break;
+              case 3: matrix[loop1 - 1][loop2 - 1][loop3 - 1][row1] = matrix[loop1 - 1][loop2 - 1][loop3 - 1][row1] + value_temp2; break;
+            }
+          }
+        }
+      }
+    } // end else if
+  } // end for
 }
-void shift(char matrix[MS][MS][MS][MS], int b1, int b2, int b3, int b4)
+void decrementencryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int b3, int b4)
 {
+  printf("DECREMENT ENCRYPT!\n");
+  unsigned char row1,  row2, row3;
+  unsigned char direction, dim1, dim2, dim3;
+  unsigned char jumper, shifter, multiplier;
+  unsigned char value, value_temp, value_temp2;
+  row1 = (b1 >> 4) & B2; row2 = (b1 >> 2) & B2; row3 = (b1 >> 0) & B2;
+  direction = (b2 >> 7) & B1; dim1 = (b2 >> 5) & B2; dim2 = (b2 >> 2) & B3; dim3 = (b2 >> 0) & B2;
+  jumper = (b3 >> 5) & B3; shifter = (b3 >> 2) & B3; multiplier = (b3 >> 0) & B2;
+  value = b4 & B8;
+  unsigned char loop1,loop2, loop3, loopm;
+  value_temp = 0;
+  for (loopm = 0; loopm < multiplier; loopm++)
+  {
+    value_temp = (value + (value_temp >> shifter) + (value_temp << shifter)) & B8;
+    if (direction == 0)
+    {
+      // 1st Dimension
+      for (loop1 = 0; loop1 < MS; loop1++)
+      {
+        value_temp2 = (value_temp + loop1 * jumper + loopm) & B8;
+        switch (dim1)
+        {
+          case 0: matrix[row1][row2][row3][loop1] = matrix[row1][row2][row3][loop1] - value_temp2; break;
+          case 1: matrix[row1][row2][loop1][row3] = matrix[row1][row2][loop1][row3] - value_temp2; break;
+          case 2: matrix[row1][loop1][row2][row3] = matrix[row1][loop1][row2][row3] - value_temp2; break;
+          case 3: matrix[loop1][row1][row2][row3] = matrix[loop1][row1][row2][row3] - value_temp2; break;
+        }
+      }
+      // 2nd Dimension
+      for (loop1 = 0; loop1 < MS; loop1++)
+      {
+        for (loop2 = 0; loop2 < MS; loop2++)
+        {
+          value_temp2 = (value_temp + (loop1 + loop2) * jumper + loopm) & B8;
+          switch (dim2)
+          {
+            case 6:
+            case 0: matrix[row1][row2][loop1][loop2] = matrix[row1][row2][loop1][loop2] - value_temp2; break;
+            case 1: matrix[row1][loop1][row2][loop2] = matrix[row1][loop1][row2][loop2] - value_temp2; break;
+            case 2: matrix[row1][loop1][loop2][row2] = matrix[row1][loop1][loop2][row2] - value_temp2; break;
+            case 3: matrix[loop1][row1][row2][loop2] = matrix[loop1][row1][row2][loop2] - value_temp2; break;
+            case 4: matrix[loop1][row1][loop2][row2] = matrix[loop1][row1][loop2][row2] - value_temp2; break;
+            case 7:
+            case 5: matrix[loop1][loop2][row1][row2] = matrix[loop1][loop2][row1][row2] - value_temp2; break;
+          }
+        }
+      }
+      // 3rd Dimension
+      for (loop1 = 0; loop1 < MS; loop1++)
+      {
+        for (loop2 = 0; loop2 < MS; loop2++)
+        {
+          for (loop3 = 0; loop3 < MS; loop3++)
+          {
+            value_temp2 = (value_temp + (loop1 + loop2 + loop3) * jumper + loopm) & B8;
+            switch (dim3)
+            {
+              case 0: matrix[row1][loop1][loop2][loop3] = matrix[row1][loop1][loop2][loop3] - value_temp2; break;
+              case 1: matrix[loop1][row1][loop2][loop3] = matrix[loop1][row1][loop2][loop3] - value_temp2; break;
+              case 2: matrix[loop1][loop2][row1][loop3] = matrix[loop1][loop2][row1][loop3] - value_temp2; break;
+              case 3: matrix[loop1][loop2][loop3][row1] = matrix[loop1][loop2][loop3][row1] - value_temp2; break;
+            }
+          }
+        }
+      }
+    } // end if
+    else if (direction == 1)
+    {
+      // 1st Dimension
+      for (loop1 = MS; loop1 > 0; loop1--)
+      {
+        value_temp2 = (value_temp + (loop1 - 1) * jumper + loopm) & B8;
+        switch (dim1)
+        {
+          case 0: matrix[row1][row2][row3][loop1 - 1] = matrix[row1][row2][row3][loop1 - 1] - value_temp2; break;
+          case 1: matrix[row1][row2][loop1 - 1][row3] = matrix[row1][row2][loop1 - 1][row3] - value_temp2; break;
+          case 2: matrix[row1][loop1 - 1][row2][row3] = matrix[row1][loop1 - 1][row2][row3] - value_temp2; break;
+          case 3: matrix[loop1 - 1][row1][row2][row3] = matrix[loop1 - 1][row1][row2][row3] - value_temp2; break;
+        }
+      }
+      // 2nd Dimension
+      for (loop1 = MS; loop1 > 0; loop1--)
+      {
+        for (loop2 = MS; loop2 > 0; loop2--)
+        {
+          value_temp2 = (value_temp + (loop1 - 1 + loop2 - 1) * jumper + loopm) & B8;
+          switch (dim2)
+          {
+            case 6:
+            case 0: matrix[row1][row2][loop1 - 1][loop2 - 1] = matrix[row1][row2][loop1 - 1][loop2 - 1] - value_temp2; break;
+            case 1: matrix[row1][loop1 - 1][row2][loop2 - 1] = matrix[row1][loop1 - 1][row2][loop2 - 1] - value_temp2; break;
+            case 2: matrix[row1][loop1 - 1][loop2 - 1][row2] = matrix[row1][loop1 - 1][loop2 - 1][row2] - value_temp2; break;
+            case 3: matrix[loop1 - 1][row1][row2][loop2 - 1] = matrix[loop1 - 1][row1][row2][loop2 - 1] - value_temp2; break;
+            case 4: matrix[loop1 - 1][row1][loop2 - 1][row2] = matrix[loop1 - 1][row1][loop2 - 1][row2] - value_temp2; break;
+            case 7:
+            case 5: matrix[loop1 - 1][loop2 - 1][row1][row2] = matrix[loop1 - 1][loop2 - 1][row1][row2] - value_temp2; break;
+          }
+        }
+      }
+      // 3rd Dimension
+      for (loop1 = MS; loop1 > 0; loop1--)
+      {
+        for (loop2 = MS; loop2 > 0; loop2--)
+        {
+          for (loop3 = MS; loop3 > 0; loop3--)
+          {
+            value_temp2 = (value_temp + (loop1 - 1 + loop2 - 1 + loop3 - 1) * jumper + loopm) & B8;
+            switch (dim3)
+            {
+              case 0: matrix[row1][loop1 - 1][loop2 - 1][loop3 - 1] = matrix[row1][loop1 - 1][loop2 - 1][loop3 - 1] - value_temp2; break;
+              case 1: matrix[loop1 - 1][row1][loop2 - 1][loop3 - 1] = matrix[loop1 - 1][row1][loop2 - 1][loop3 - 1] - value_temp2; break;
+              case 2: matrix[loop1 - 1][loop2 - 1][row1][loop3 - 1] = matrix[loop1 - 1][loop2 - 1][row1][loop3 - 1] - value_temp2; break;
+              case 3: matrix[loop1 - 1][loop2 - 1][loop3 - 1][row1] = matrix[loop1 - 1][loop2 - 1][loop3 - 1][row1] - value_temp2; break;
+            }
+          }
+        }
+      }
+    } // end else if
+  } // end for
+}
+void shiftencryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int b3, int b4)
+{
+  printf("SHIFT ENCRYPT!\n");
   /*int row1; int row2; int row3;
   int dimension; int direction; int value;
   row1 = (b1 >> 4) & 0xFF;
@@ -411,8 +545,9 @@ void shift(char matrix[MS][MS][MS][MS], int b1, int b2, int b3, int b4)
   direction = (b2 >> 5) & 0xFF;
   value = b2 & 0xFF;*/
 }
-void invert(char matrix[MS][MS][MS][MS], int b1, int b2, int b3, int b4)
+void invertencryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int b3, int b4)
 {
+  printf("INVERT ENCRYPT!\n");
   /*int row1; int row2; int row3;
   int dimension; int direction; int value;
   row1 = (b1 >> 4) & 0xFF;
@@ -421,4 +556,279 @@ void invert(char matrix[MS][MS][MS][MS], int b1, int b2, int b3, int b4)
   dimension = (b2 >> 6) & 0xFF;
   direction = (b2 >> 5) & 0xFF;
   value = b2 & 0xFF;*/
+}
+
+void incrementdecryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int b3, int b4)
+{
+  printf("INCREMENT DECRYPT!\n");
+  unsigned char row1,  row2, row3;
+  unsigned char direction, dim1, dim2, dim3;
+  unsigned char jumper, shifter, multiplier;
+  unsigned char value, value_temp, value_temp2;
+  row1 = (b1 >> 4) & B2; row2 = (b1 >> 2) & B2; row3 = (b1 >> 0) & B2;
+  direction = (b2 >> 7) & B1; dim1 = (b2 >> 5) & B2; dim2 = (b2 >> 2) & B3; dim3 = (b2 >> 0) & B2;
+  jumper = (b3 >> 5) & B3; shifter = (b3 >> 2) & B3; multiplier = (b3 >> 0) & B2;
+  value = b4 & B8;
+  unsigned char loop1,loop2, loop3, loopm;
+  unsigned char value_temp_array[multiplier];
+  for (loopm = 0; loopm < multiplier; loopm++)
+  {
+    if (loopm != 0)
+    {
+      value_temp_array[loopm] = value + (value_temp_array[loopm - 1] >> shifter) + (value_temp_array[loopm - 1] << shifter);
+    }
+    else
+    {
+      value_temp_array[loopm] = value + (0 >> shifter) + (0 << shifter);
+    }
+  }
+  for (loopm = multiplier; loopm > 0; loopm--)
+  {
+    value_temp = value_temp_array[loopm - 1];
+    if (direction == 0)
+    {
+      // 3rd Dimension
+      for (loop3 = MS; loop3 > 0; loop3--)
+      {
+        for (loop2 = MS; loop2 > 0; loop2--)
+        {
+          for (loop1 = MS; loop1 > 0; loop1--)
+          {
+            value_temp2 = (value_temp + (loop1 - 1 + loop2 - 1 + loop3 - 1) * jumper + loopm - 1) & B8;
+            switch (dim3)
+            {
+              case 0: matrix[row1][loop1 - 1][loop2 - 1][loop3 - 1] = matrix[row1][loop1 - 1][loop2 - 1][loop3 - 1] + value_temp2; break;
+              case 1: matrix[loop1 - 1][row1][loop2 - 1][loop3 - 1] = matrix[loop1 - 1][row1][loop2 - 1][loop3 - 1] + value_temp2; break;
+              case 2: matrix[loop1 - 1][loop2 - 1][row1][loop3 - 1] = matrix[loop1 - 1][loop2 - 1][row1][loop3 - 1] + value_temp2; break;
+              case 3: matrix[loop1 - 1][loop2 - 1][loop3 - 1][row1] = matrix[loop1 - 1][loop2 - 1][loop3 - 1][row1] + value_temp2; break;
+            }
+          }
+        }
+      }
+      // 2nd Dimension
+      for (loop2 = MS; loop2 > 0; loop2--)
+      {
+        for (loop1 = MS; loop1 > 0; loop1--)
+        {
+          value_temp2 = (value_temp + (loop1 - 1 + loop2 - 1) * jumper + loopm - 1) & B8;
+          switch (dim2)
+          {
+            case 6:
+            case 0: matrix[row1][row2][loop1 - 1][loop2 - 1] = matrix[row1][row2][loop1 - 1][loop2 - 1] + value_temp2; break;
+            case 1: matrix[row1][loop1 - 1][row2][loop2 - 1] = matrix[row1][loop1 - 1][row2][loop2 - 1] + value_temp2; break;
+            case 2: matrix[row1][loop1 - 1][loop2 - 1][row2] = matrix[row1][loop1 - 1][loop2 - 1][row2] + value_temp2; break;
+            case 3: matrix[loop1 - 1][row1][row2][loop2 - 1] = matrix[loop1 - 1][row1][row2][loop2 - 1] + value_temp2; break;
+            case 4: matrix[loop1 - 1][row1][loop2 - 1][row2] = matrix[loop1 - 1][row1][loop2 - 1][row2] + value_temp2; break;
+            case 7:
+            case 5: matrix[loop1 - 1][loop2 - 1][row1][row2] = matrix[loop1 - 1][loop2 - 1][row1][row2] + value_temp2; break;
+          }
+        }
+      }
+      // 1st Dimension
+      for (loop1 = MS; loop1 > 0; loop1--)
+      {
+        value_temp2 = (value_temp + (loop1 - 1) * jumper + loopm - 1) & B8;
+        switch (dim1)
+        {
+          case 0: matrix[row1][row2][row3][loop1 - 1] = matrix[row1][row2][row3][loop1 - 1] + value_temp2; break;
+          case 1: matrix[row1][row2][loop1 - 1][row3] = matrix[row1][row2][loop1 - 1][row3] + value_temp2; break;
+          case 2: matrix[row1][loop1 - 1][row2][row3] = matrix[row1][loop1 - 1][row2][row3] + value_temp2; break;
+          case 3: matrix[loop1 - 1][row1][row2][row3] = matrix[loop1 - 1][row1][row2][row3] + value_temp2; break;
+        }
+      }
+    } // end if
+    else if (direction == 1)
+    {
+      // 3rd Dimension
+      for (loop3 = 0; loop3 < MS; loop3++)
+      {
+        for (loop2 = 0; loop2 < MS; loop2++)
+        {
+          for (loop1 = 0; loop1 < MS; loop1++)
+          {
+            value_temp2 = (value_temp + (loop1 + loop2 + loop3) * jumper + loopm - 1) & B8;
+            switch (dim3)
+            {
+              case 0: matrix[row1][loop1][loop2][loop3] = matrix[row1][loop1][loop2][loop3] + value_temp2; break;
+              case 1: matrix[loop1][row1][loop2][loop3] = matrix[loop1][row1][loop2][loop3] + value_temp2; break;
+              case 2: matrix[loop1][loop2][row1][loop3] = matrix[loop1][loop2][row1][loop3] + value_temp2; break;
+              case 3: matrix[loop1][loop2][loop3][row1] = matrix[loop1][loop2][loop3][row1] + value_temp2; break;
+            }
+          }
+        }
+      }
+      // 2nd Dimension
+      for (loop2 = 0; loop2 < MS; loop2++)
+      {
+        for (loop1 = 0; loop1 < MS; loop1++)
+        {
+          value_temp2 = (value_temp + (loop1 + loop2) * jumper + loopm - 1) & B8;
+          switch (dim2)
+          {
+            case 6:
+            case 0: matrix[row1][row2][loop1][loop2] = matrix[row1][row2][loop1][loop2] + value_temp2; break;
+            case 1: matrix[row1][loop1][row2][loop2] = matrix[row1][loop1][row2][loop2] + value_temp2; break;
+            case 2: matrix[row1][loop1][loop2][row2] = matrix[row1][loop1][loop2][row2] + value_temp2; break;
+            case 3: matrix[loop1][row1][row2][loop2] = matrix[loop1][row1][row2][loop2] + value_temp2; break;
+            case 4: matrix[loop1][row1][loop2][row2] = matrix[loop1][row1][loop2][row2] + value_temp2; break;
+            case 7:
+            case 5: matrix[loop1][loop2][row1][row2] = matrix[loop1][loop2][row1][row2] + value_temp2; break;
+          }
+        }
+      }
+      // 1st Dimension
+      for (loop1 = 0; loop1 < MS; loop1++)
+      {
+        value_temp2 = (value_temp + (loop1) * jumper + loopm - 1) & B8;
+        switch (dim1)
+        {
+          case 0: matrix[row1][row2][row3][loop1] = matrix[row1][row2][row3][loop1] + value_temp2; break;
+          case 1: matrix[row1][row2][loop1][row3] = matrix[row1][row2][loop1][row3] + value_temp2; break;
+          case 2: matrix[row1][loop1][row2][row3] = matrix[row1][loop1][row2][row3] + value_temp2; break;
+          case 3: matrix[loop1][row1][row2][row3] = matrix[loop1][row1][row2][row3] + value_temp2; break;
+        }
+      }
+    } // end else if
+  } // end for
+}
+void decrementdecryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int b3, int b4)
+{
+  printf("DECREMENT DECRYPT!\n");
+  unsigned char row1,  row2, row3;
+  unsigned char direction, dim1, dim2, dim3;
+  unsigned char jumper, shifter, multiplier;
+  unsigned char value, value_temp, value_temp2;
+  row1 = (b1 >> 4) & B2; row2 = (b1 >> 2) & B2; row3 = (b1 >> 0) & B2;
+  direction = (b2 >> 7) & B1; dim1 = (b2 >> 5) & B2; dim2 = (b2 >> 2) & B3; dim3 = (b2 >> 0) & B2;
+  jumper = (b3 >> 5) & B3; shifter = (b3 >> 2) & B3; multiplier = (b3 >> 0) & B2;
+  value = b4 & B8;
+  unsigned char loop1,loop2, loop3, loopm;
+  unsigned char value_temp_array[multiplier];
+  for (loopm = 0; loopm < multiplier; loopm++)
+  {
+    if (loopm != 0)
+    {
+      value_temp_array[loopm] = value + (value_temp_array[loopm - 1] >> shifter) + (value_temp_array[loopm - 1] << shifter);
+    }
+    else
+    {
+      value_temp_array[loopm] = value + (0 >> shifter) + (0 << shifter);
+    }
+  }
+  for (loopm = multiplier; loopm > 0; loopm--)
+  {
+    value_temp = value_temp_array[loopm - 1];
+    if (direction == 0)
+    {
+      // 3rd Dimension
+      for (loop3 = MS; loop3 > 0; loop3--)
+      {
+        for (loop2 = MS; loop2 > 0; loop2--)
+        {
+          for (loop1 = MS; loop1 > 0; loop1--)
+          {
+            value_temp2 = (value_temp + (loop1 - 1 + loop2 - 1 + loop3 - 1) * jumper + loopm - 1) & B8;
+            switch (dim3)
+            {
+              case 0: matrix[row1][loop1 - 1][loop2 - 1][loop3 - 1] = matrix[row1][loop1 - 1][loop2 - 1][loop3 - 1] - value_temp2; break;
+              case 1: matrix[loop1 - 1][row1][loop2 - 1][loop3 - 1] = matrix[loop1 - 1][row1][loop2 - 1][loop3 - 1] - value_temp2; break;
+              case 2: matrix[loop1 - 1][loop2 - 1][row1][loop3 - 1] = matrix[loop1 - 1][loop2 - 1][row1][loop3 - 1] - value_temp2; break;
+              case 3: matrix[loop1 - 1][loop2 - 1][loop3 - 1][row1] = matrix[loop1 - 1][loop2 - 1][loop3 - 1][row1] - value_temp2; break;
+            }
+          }
+        }
+      }
+      // 2nd Dimension
+      for (loop2 = MS; loop2 > 0; loop2--)
+      {
+        for (loop1 = MS; loop1 > 0; loop1--)
+        {
+          value_temp2 = (value_temp + (loop1 - 1 + loop2 - 1) * jumper + loopm - 1) & B8;
+          switch (dim2)
+          {
+            case 6:
+            case 0: matrix[row1][row2][loop1 - 1][loop2 - 1] = matrix[row1][row2][loop1 - 1][loop2 - 1] - value_temp2; break;
+            case 1: matrix[row1][loop1 - 1][row2][loop2 - 1] = matrix[row1][loop1 - 1][row2][loop2 - 1] - value_temp2; break;
+            case 2: matrix[row1][loop1 - 1][loop2 - 1][row2] = matrix[row1][loop1 - 1][loop2 - 1][row2] - value_temp2; break;
+            case 3: matrix[loop1 - 1][row1][row2][loop2 - 1] = matrix[loop1 - 1][row1][row2][loop2 - 1] - value_temp2; break;
+            case 4: matrix[loop1 - 1][row1][loop2 - 1][row2] = matrix[loop1 - 1][row1][loop2 - 1][row2] - value_temp2; break;
+            case 7:
+            case 5: matrix[loop1 - 1][loop2 - 1][row1][row2] = matrix[loop1 - 1][loop2 - 1][row1][row2] - value_temp2; break;
+          }
+        }
+      }
+      // 1st Dimension
+      for (loop1 = MS; loop1 > 0; loop1--)
+      {
+        value_temp2 = (value_temp + (loop1 - 1) * jumper + loopm - 1) & B8;
+        switch (dim1)
+        {
+          case 0: matrix[row1][row2][row3][loop1 - 1] = matrix[row1][row2][row3][loop1 - 1] - value_temp2; break;
+          case 1: matrix[row1][row2][loop1 - 1][row3] = matrix[row1][row2][loop1 - 1][row3] - value_temp2; break;
+          case 2: matrix[row1][loop1 - 1][row2][row3] = matrix[row1][loop1 - 1][row2][row3] - value_temp2; break;
+          case 3: matrix[loop1 - 1][row1][row2][row3] = matrix[loop1 - 1][row1][row2][row3] - value_temp2; break;
+        }
+      }
+    } // end if
+    else if (direction == 1)
+    {
+      // 3rd Dimension
+      for (loop3 = 0; loop3 < MS; loop3++)
+      {
+        for (loop2 = 0; loop2 < MS; loop2++)
+        {
+          for (loop1 = 0; loop1 < MS; loop1++)
+          {
+            value_temp2 = (value_temp + (loop1 + loop2 + loop3) * jumper + loopm - 1) & B8;
+            switch (dim3)
+            {
+              case 0: matrix[row1][loop1][loop2][loop3] = matrix[row1][loop1][loop2][loop3] - value_temp2; break;
+              case 1: matrix[loop1][row1][loop2][loop3] = matrix[loop1][row1][loop2][loop3] - value_temp2; break;
+              case 2: matrix[loop1][loop2][row1][loop3] = matrix[loop1][loop2][row1][loop3] - value_temp2; break;
+              case 3: matrix[loop1][loop2][loop3][row1] = matrix[loop1][loop2][loop3][row1] - value_temp2; break;
+            }
+          }
+        }
+      }
+      // 2nd Dimension
+      for (loop2 = 0; loop2 < MS; loop2++)
+      {
+        for (loop1 = 0; loop1 < MS; loop1++)
+        {
+          value_temp2 = (value_temp + (loop1 + loop2) * jumper + loopm - 1) & B8;
+          switch (dim2)
+          {
+            case 6:
+            case 0: matrix[row1][row2][loop1][loop2] = matrix[row1][row2][loop1][loop2] - value_temp2; break;
+            case 1: matrix[row1][loop1][row2][loop2] = matrix[row1][loop1][row2][loop2] - value_temp2; break;
+            case 2: matrix[row1][loop1][loop2][row2] = matrix[row1][loop1][loop2][row2] - value_temp2; break;
+            case 3: matrix[loop1][row1][row2][loop2] = matrix[loop1][row1][row2][loop2] - value_temp2; break;
+            case 4: matrix[loop1][row1][loop2][row2] = matrix[loop1][row1][loop2][row2] - value_temp2; break;
+            case 7:
+            case 5: matrix[loop1][loop2][row1][row2] = matrix[loop1][loop2][row1][row2] - value_temp2; break;
+          }
+        }
+      }
+      // 1st Dimension
+      for (loop1 = 0; loop1 < MS; loop1++)
+      {
+        value_temp2 = (value_temp + (loop1) * jumper + loopm - 1) & B8;
+        switch (dim1)
+        {
+          case 0: matrix[row1][row2][row3][loop1] = matrix[row1][row2][row3][loop1] - value_temp2; break;
+          case 1: matrix[row1][row2][loop1][row3] = matrix[row1][row2][loop1][row3] - value_temp2; break;
+          case 2: matrix[row1][loop1][row2][row3] = matrix[row1][loop1][row2][row3] - value_temp2; break;
+          case 3: matrix[loop1][row1][row2][row3] = matrix[loop1][row1][row2][row3] - value_temp2; break;
+        }
+      }
+    } // end else if
+  } // end for
+}
+void shiftdecryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int b3, int b4)
+{
+  printf("SHIFT DECRYPT!\n");
+}
+void invertdecryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int b3, int b4)
+{
+  printf("INVERT DECRYPT!\n");
 }
