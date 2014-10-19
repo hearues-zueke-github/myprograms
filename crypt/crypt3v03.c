@@ -821,7 +821,7 @@ void shiftencryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int b
 void invertencryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int b3, int b4)
 {
   if (PRINT_OUT_MODE == 1) {printf("VE ");}
-  unsigned char row1, row2, row3;
+  unsigned char row1,  row2, row3;
   unsigned char direction, dim1, dim2, dim3;
   unsigned char jumper, shifter, multiplier;
   unsigned char value, value_temp;
@@ -831,7 +831,6 @@ void invertencryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int 
   value = b4 & B8;
   value = jumper; jumper = shifter; shifter = value;
   unsigned char loop1, loop2, loop3, loopm;
-  multiplier = 1;
   for (loopm = 0; loopm < multiplier; loopm++)
   {
     if (direction == 0)
@@ -936,7 +935,7 @@ void invertencryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int 
     else if (direction == 1)
     {
       // 1st Dimension
-      for (loop1 = MS; loop1 > MS / 2; loop1--)
+      for (loop1 = MS; loop1 > MS / 2 - 1; loop1--)
       {
         switch (dim1)
         {
@@ -963,7 +962,7 @@ void invertencryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int 
       // 2nd Dimension
       for (loop1 = 0; loop1 < MS; loop1++)
       {
-        for (loop2 = MS; loop2 > MS / 2; loop2--)
+        for (loop2 = MS; loop2 > MS / 2 - 1; loop2--)
         {
           switch (dim2)
           {
@@ -1005,7 +1004,7 @@ void invertencryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int 
       {
         for (loop2 = 0; loop2 < MS; loop2++)
         {
-          for (loop3 = MS; loop3 > MS / 2; loop3--)
+          for (loop3 = MS; loop3 > MS /2 - 1; loop3--)
           {
             switch (dim3)
             {
@@ -1559,7 +1558,7 @@ void shiftdecryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int b
 void invertdecryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int b3, int b4)
 {
   if (PRINT_OUT_MODE == 1) {printf("VD ");}
-  unsigned char row1, row2, row3;
+  unsigned char row1,  row2, row3;
   unsigned char direction, dim1, dim2, dim3;
   unsigned char jumper, shifter, multiplier;
   unsigned char value, value_temp;
@@ -1569,7 +1568,6 @@ void invertdecryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int 
   value = b4 & B8;
   value = jumper; jumper = shifter; shifter = value;
   unsigned char loop1, loop2, loop3, loopm;
-  multiplier = 1;
   for (loopm = 0; loopm < multiplier; loopm++)
   {
     if (direction == 0)
@@ -1579,7 +1577,7 @@ void invertdecryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int 
       {
         for (loop2 = 0; loop2 < MS; loop2++)
         {
-          for (loop3 = MS; loop3 > MS /2; loop3--)
+          for (loop3 = MS; loop3 > MS /2 - 1; loop3--)
           {
             switch (dim3)
             {
@@ -1608,7 +1606,7 @@ void invertdecryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int 
       // 2nd Dimension
       for (loop1 = 0; loop1 < MS; loop1++)
       {
-        for (loop2 = MS; loop2 > MS / 2; loop2--)
+        for (loop2 = MS; loop2 > MS / 2 - 1; loop2--)
         {
           switch (dim2)
           {
@@ -1641,12 +1639,12 @@ void invertdecryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int 
             case 3: matrix[loop1][row1][row2][MS - loop2] = value_temp; break;
             case 4: matrix[loop1][row1][MS - loop2][row2] = value_temp; break;
             case 7:
-            case 5: matrix[loop1][MS - loop2][row1][row2] = value_temp; break;
+            case 5: matrix[loop1][MS - 1 - loop2][row1][row2] = value_temp; break;
           }
         }
       }
       // 1st Dimension
-      for (loop1 = MS; loop1 > MS / 2; loop1--)
+      for (loop1 = MS; loop1 > MS / 2 - 1; loop1--)
       {
         switch (dim1)
         {
@@ -1678,7 +1676,7 @@ void invertdecryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int 
       {
         for (loop2 = 0; loop2 < MS; loop2++)
         {
-          for (loop3 = 0; loop3 < MS / 2; loop3++)
+          for (loop3 = 0; loop3 < MS /2; loop3++)
           {
             switch (dim3)
             {
