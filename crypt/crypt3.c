@@ -821,7 +821,7 @@ void shiftencryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int b
 void invertencryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int b3, int b4)
 {
   if (PRINT_OUT_MODE == 1) {printf("VE ");}
-  /*unsigned char row1,  row2, row3;
+  unsigned char row1,  row2, row3;
   unsigned char direction, dim1, dim2, dim3;
   unsigned char jumper, shifter, multiplier;
   unsigned char value, value_temp, value_temp2;
@@ -829,7 +829,8 @@ void invertencryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int 
   direction = (b2 >> 7) & B1; dim1 = (b2 >> 5) & B2; dim2 = (b2 >> 2) & B3; dim3 = (b2 >> 0) & B2;
   jumper = (b3 >> 5) & B3; shifter = (b3 >> 2) & B3; multiplier = (b3 >> 0) & B2;
   value = b4 & B8;
-  unsigned char loop1,loop2, loop3, loopm;*/
+  unsigned char loop1, loop2, loop3, loopm;
+  value_temp = 0;
 }
 
 void incrementdecryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int b3, int b4)
@@ -1356,4 +1357,14 @@ void shiftdecryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int b
 void invertdecryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int b3, int b4)
 {
   if (PRINT_OUT_MODE == 1) {printf("VD ");}
+  unsigned char row1,  row2, row3;
+  unsigned char direction, dim1, dim2, dim3;
+  unsigned char jumper, shifter, multiplier;
+  unsigned char value, value_temp, value_temp2;
+  row1 = (b1 >> 4) & B2; row2 = (b1 >> 2) & B2; row3 = (b1 >> 0) & B2;
+  direction = (b2 >> 7) & B1; dim1 = (b2 >> 5) & B2; dim2 = (b2 >> 2) & B3; dim3 = (b2 >> 0) & B2;
+  jumper = (b3 >> 5) & B3; shifter = (b3 >> 2) & B3; multiplier = (b3 >> 0) & B2;
+  value = b4 & B8;
+  unsigned char loop1, loop2, loop3, loopm;
+  value_temp = 0;
 }
