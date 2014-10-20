@@ -1,6 +1,47 @@
 // Author: Ziko Haris
 // Date: 2014.10.16 (YYYYMMDD)
 // Title: My Crypt Program, 3rd time XD, again
+
+//// Short function overview of the (en/de)cryption of this program:
+//// Command to start this program:
+////     ./<program> <cryptmode> <cryptfile> <file1> <file2> ...
+//// Function of the crypt algorithm:
+//// 1.) At first the crypt file will be readed in a array with a max size of 4 MiB
+//// 2.) Next in the output file will be written, how long the input file is 
+//// 3.) Then it will read 256 bytes (4*4*4*4) from the input file in a 4-dimension-array-matrix
+//// 3.1.) If the input file has not 256 bytes in it, then the rest of the matrix
+////       will be filled with other numbers e.g. "0" or with random generated numbers
+//// 4.) This matrix will be crypted with the crypt file, which was readed in an array
+//// 5.) After the crypting, it will be printed out in an output file.
+//// 6.) If the input file is bigger than 256 bytes, then it will repeat step 3 again,
+////     until the crypting is done
+//// The Matrix will be crypted by 4 Bytes
+//// 1st Byte: e.g. 10110101
+//                 b10 is the mode of the en/de crypting
+//                   b11 is the number for the 1st row of the matrix
+//                     b01 is the number for the 2nd row of the matrix
+//                       b01 is the number for the 3rd row of the matrix
+//// 2nd Byte: e.g. 10010101
+//                 b1 is the direction of crypting (e.g. 0 is right and 1 is left)
+//                  b00 is the number for the 1st dimension
+//                    b101 is the number for the 2nd dimension
+//                       b01 is the number for the 3rd dimension
+//// 3rd Byte: e.g. 10010101
+//                 b100
+//                    b100
+//                       b00
+//// 4th Byte: e.g. 10010101
+
+//// 1st byte: e.g. 10010111
+////              0b10 is the crypt mode
+////                0b01 is the 1st row
+////                  0b01 is the 2nd row
+////                    0b11 is the 3rd row
+//// 2nd byte: e.g. 01110110
+////              0b01 is the line dimenion, in which line this will happen
+////                0b1 is the direction, which will be crypted
+////                 0b10110 is the value for the (en/de)cryption
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -31,18 +72,6 @@ size_t fileSize(FILE *file);
 void printArrayOneDimension(unsigned char *array, int array_length);
 int gcd(int n1, int n2);
 
-//// Short function overview of the (en/de)cryption of this program:
-//// The Matrix will be mixed by 4 Bytes
-//// mode,row1,row2,row3,dimension,
-//// 1st byte: e.g. 10010111
-////              0b10 is the crypt mode
-////                0b01 is the 1st row
-////                  0b01 is the 2nd row
-////                    0b11 is the 3rd row
-//// 2nd byte: e.g. 01110110
-////              0b01 is the line dimenion, in which line this will happen
-////                0b1 is the direction, which will be crypted
-////                 0b10110 is the value for the (en/de)cryption
 void encryption(unsigned char matrix[MS][MS][MS][MS], unsigned char *crypt, int crypt_length);
 void decryption(unsigned char matrix[MS][MS][MS][MS], unsigned char *crypt, int crypt_length);
 
@@ -572,7 +601,7 @@ void shiftencryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int b
   unsigned char value, value_temp, value_temp2, value_temp3, value_gcd;
   row1 = (b1 >> 4) & B2; row2 = (b1 >> 2) & B2; row3 = (b1 >> 0) & B2;
   direction = (b2 >> 7) & B1; dim1 = (b2 >> 5) & B2; dim2 = (b2 >> 2) & B3; dim3 = (b2 >> 0) & B2;
-  jumper = (b3 >> 5) & B3; shifter = (b3 >> 3) & B2; multiplier = (b3 >> 0) & B3;
+  jumper = (b3 >> 5) & B3; shifter = (b3 >> 2) & B3; multiplier = (b3 >> 0) & B2;
   value = b4 & B8;
   unsigned char loop1, loop2, loop3, loopm, loop_s;
   value = jumper;jumper=value;
@@ -1310,7 +1339,7 @@ void shiftdecryption(unsigned char matrix[MS][MS][MS][MS], int b1, int b2, int b
   unsigned char value, value_temp, value_temp2, value_temp3, value_gcd;
   row1 = (b1 >> 4) & B2; row2 = (b1 >> 2) & B2; row3 = (b1 >> 0) & B2;
   direction = (b2 >> 7) & B1; dim1 = (b2 >> 5) & B2; dim2 = (b2 >> 2) & B3; dim3 = (b2 >> 0) & B2;
-  jumper = (b3 >> 5) & B3; shifter = (b3 >> 3) & B2; multiplier = (b3 >> 0) & B3;
+  jumper = (b3 >> 5) & B3; shifter = (b3 >> 2) & B3; multiplier = (b3 >> 0) & B2;
   value = b4 & B8;
   unsigned char loop1, loop2, loop3, loopm, loop_s;
   value = jumper;jumper=value;
