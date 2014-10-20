@@ -4,23 +4,43 @@
 #define COMBINE_LENGTH 4
 #define PERMUTATION_LENGTH 3
 
-char *getPermutationArray(char *in, int in_length, char *combine, int combine_length, char *permutation, char *temp, int permutation_length)
+void getPermutationArray(char *in, int in_length, char *combine, int combine_length, char *permutation, char *temp, int permutation_length)
 {
   int temp_length = 0;
-  int loop = 0;
-  for (; loop < in_length; loop++)
+  int loop;
+  if (combine_length < permutation_length)
   {
-    if (loop < permutation_length - 1)
+    printf("Combine length < permutation length");
+  }
+  else
+  {
+    for (loop = 0; loop < combine_length; loop++)
     {
-      temp[loop] = in[loop];
-      temp_length++;
+      combine[loop] = combine[loop] % permutation_length == 0 ?
+                      combine[loop] = permutation_length :
+                      combine[loop] % permutation_length;
     }
-    else
+    for (loop = 0; loop < in_length; loop++)
     {
+      if (loop < permutation_length && loop < in_length)
+      {
+        temp[loop] = in[loop];
+        permutation[loop] = in[loop];
+        temp_length++;
+      }
+      else
+      {
+        if (loop < in_length - permutation_length)
+        {
 
+        }
+        else
+        {
+
+        }
+      }
     }
   }
-  return permutation;
 }
 
 void printCharArray(char *array, int array_length)
@@ -66,10 +86,10 @@ int main(int argc, char **argv)
   //printf("gcd(13, 5) = %d\n", gcd(13, 5));
   char array[IN_LENGTH] = {2,6,4,3,5,8,1,10,9,7};
   char array_combine[COMBINE_LENGTH] = {3,4,6,5};
-  char array[IN_LENGTH];
-  char temp_array[PERMUTATION_LENGTH]
-  printCharArray(array, array_length);
-  char *array_finish = getPermutationArray(array, array_length, array_combine, array_combine_length, array_permutation);
-  printCharArray(array_finish, array_length);
+  char temp_array[PERMUTATION_LENGTH];
+  printCharArray(array, IN_LENGTH);
+  char array_finish[IN_LENGTH];
+  getPermutationArray(array, IN_LENGTH, array_combine, COMBINE_LENGTH, array_finish, temp_array, PERMUTATION_LENGTH);
+  printCharArray(array_finish, IN_LENGTH );
   return 0;
 }
