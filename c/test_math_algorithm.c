@@ -1,17 +1,16 @@
 #include <stdio.h>
 
-#define IN_LENGTH 50
-#define COMBINE_LENGTH 64
-#define PERMUTATION_LENGTH 16
-
-void printCharArray(char *array, int length)
+void printCharArray(char *array, int length, int end_line)
 {
   int loop;
   for (loop = 0; loop < length; loop++)
   {
     printf("%2d,", array[loop]);
   }
-  printf("\n");
+  if (end_line == 1)
+  {
+    printf("\n");
+  }
 }
 int gcd(int n1, int n2)
 {
@@ -39,7 +38,7 @@ int gcd(int n1, int n2)
   }
   return n1;
 }
-void copyArrayFromOther(char *from, char *to, int length)
+void copyArrayFromTo(char *from, char *to, int length)
 {
   int loop = 0;
     for (loop = 0; loop < length; loop++)
@@ -92,6 +91,18 @@ void getPermutationArray(char *in, int in_length, char *combine, int combine_len
     loop2++;
   }
 }
+int checkIfArraysEqual(char *array1, char *array2, int length)
+{
+  int loop = 0;
+  for (loop = 0; loop < length; loop++)
+  {
+    if (array1[loop] != array2[loop])
+    {
+      return 0;
+    }
+  }
+  return 1;
+}
 int findElementInArray(char *array, int length, char value)
 {
   int loop = 0;
@@ -104,20 +115,114 @@ int findElementInArray(char *array, int length, char value)
   }
   return -1;
 }
+void fillArrayWithNumbers(char *array, int length, int modus)
+{
+  int loop = 0;
+  if (modus == 0)
+  {
+    for (loop = 0; loop < length; loop++)
+    {
+      array[loop] = 1;
+    }
+  }
+  if (modus == 1)
+  {
+    for (loop = 0; loop < length; loop++)
+    {
+      array[loop] = loop + 1;
+    }
+  }
+}
+int incrementArrayByOne(char *array, int length, int max_number)
+{
+  int loop = 0;
+  max_number++;
+  for (loop = 0; loop < length; loop++)
+  {
+    array[loop]++;
+    if (array[loop] % max_number == 0)
+    {
+      array[loop] = 1;
+      if (loop == length - 1)
+      {
+        return 1;
+      }
+    }
+    else
+    {
+      break;
+    }
+  }
+  return 0;
+}
+int power(int n1, int n2)
+{
+  int loop = 0;
+  int temp = 1;
+  for (loop = 0; loop < n2; loop++)
+  {
+    temp *= n1;
+  }
+  return temp;
+}
+int getMinOfArray(int *array, int length)
+{
+  int loop = 0;
+  int min = array[0];
+  for (loop = 1; loop < length; loop++)
+  {
+    if (min > array[loop])
+    {
+      min = array[loop];
+    }
+  }
+  return min;
+}
+int getMaxOfArray(int *array, int length)
+{
+  int loop = 0;
+  int max = array[0];
+  for (loop = 1; loop < length; loop++)
+  {
+    if (max < array[loop])
+    {
+      max = array[loop];
+    }
+  }
+  return max;
+}
 
 int main(int argc, char **argv)
 {
-  char array[IN_LENGTH] = {1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50};
-  char array_combine[COMBINE_LENGTH] = {2,8,7,2,5,4,3,2,5,7,4,2,4,5,1,5,7,2,2,4,5,7,7,4,1,2,5,4,3,5,2,7};
-  char temp_array[PERMUTATION_LENGTH];
-  printCharArray(array, IN_LENGTH);
-  char array_finish[IN_LENGTH];
   int loop = 0;
-  for (loop = 0; loop < 10000; loop++)
+  int loop2 = 0;
+  int in_length = 64;
+  int combine_length = 4;
+  int permutation_length = 8;
+  char array_original[in_length];
+  fillArrayWithNumbers(array_original, in_length, 1);
+  char array[in_length];
+  char array_combine[combine_length];
+  fillArrayWithNumbers(array_combine, combine_length, 0);
+  char temp_array[permutation_length];
+  char array_finish[in_length];
+  int all_possibilities = power(permutation_length, combine_length);
+  int array_counter[all_possibilities];
+  for (loop2 = 0; loop2 < all_possibilities; loop2++)
   {
-    getPermutationArray(array, IN_LENGTH, array_combine, COMBINE_LENGTH, array_finish, temp_array, PERMUTATION_LENGTH);
-    printCharArray(array_finish, IN_LENGTH);
-    copyArrayFromOther(array_finish, array, IN_LENGTH);
+    copyArrayFromTo(array_original, array, in_length);
+    fillArrayWithNumbers(array_finish, in_length, 0);
+    for (loop = 0; (loop < 100000) && !checkIfArraysEqual(array_finish, array_original, in_length); loop++)
+    {
+      getPermutationArray(array, in_length, array_combine, combine_length, array_finish, temp_array, permutation_length);
+      //printCharArray(array_finish, in_length);
+      copyArrayFromTo(array_finish, array, in_length);
+    }
+    printCharArray(array_combine, combine_length, 0);
+    printf("loop=%d\n",loop);
+    array_counter[loop2] = loop;
+    incrementArrayByOne(array_combine, combine_length, permutation_length);
   }
+  printf("min=%d   max=%d\n", getMinOfArray(array_counter, all_possibilities), getMaxOfArray(array_counter, all_possibilities));
   return 0;
 }
