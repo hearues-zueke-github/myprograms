@@ -12,6 +12,18 @@ void printCharArray(char *array, int length, int end_line)
     printf("\n");
   }
 }
+void printIntArray(int *array, int length, int end_line)
+{
+  int loop;
+  for (loop = 0; loop < length; loop++)
+  {
+    printf("%d,", array[loop]);
+  }
+  if (end_line == 1)
+  {
+    printf("\n");
+  }
+}
 int gcd(int n1, int n2)
 {
   int number;
@@ -191,14 +203,101 @@ int getMaxOfArray(int *array, int length)
   }
   return max;
 }
+void sortArrayWithShellsort(int *array, int length)
+{
+  int loop = 0;
+  int loop2 = 0;
+  int loop3 = 0;
+  int loop4 = 0;
+  int temp;
+  int counter = 1;
+  for (;;)
+  {
+    counter = counter * 2 + 1;
+    loop++;
+    if (counter >= length)
+    {
+      break;
+    }
+  }
+  int temp_jumper[loop];
+  temp_jumper[0] = 1;
+  counter = loop;
+  for (loop2 = 1; loop2 < loop; loop2++)
+  {
+    temp_jumper[loop2] = temp_jumper[loop2 - 1] * 2 + 1;
+  }
+  for (loop2 = counter; loop2 >= 0; loop2--)
+  {
+    for (loop = 0; loop < temp_jumper[loop2]; loop++)
+    {
+      for (loop3 = 1; loop + loop3 * temp_jumper[loop2] < length; loop3++)
+      {
+        for (loop4 = loop3; loop + (loop4 - 1) * temp_jumper[loop2] >= 0; loop4--)
+        {
+          if (array[loop + (loop4 - 1) * temp_jumper[loop2]] > array[loop + loop4 * temp_jumper[loop2]])
+          {
+            temp = array[loop + (loop4 - 1) * temp_jumper[loop2]];
+            array[loop + (loop4 - 1) * temp_jumper[loop2]] = array[loop + loop4 * temp_jumper[loop2]];
+            array[loop + loop4 * temp_jumper[loop2]] = temp;
+          }
+          else
+          {
+            break;
+          }
+        }
+      }
+    }
+  }
+}
+void getStatisticOfArray(int *array, int length)
+{
+  int loop = 0;
+  int counter = 0;
+  int position = 0;
+  sortArrayWithShellsort(array, length);
+  for (loop = 0; loop < length - 1; loop++)
+  {
+    if (array[loop] != array[loop + 1])
+    {
+      counter++;
+    }
+  }
+  int array_statistic[counter][2];
+  for (loop = 0; loop < counter; loop++)
+  {
+    array_statistic[loop][1] = 0;
+  }
+  position = 0;
+  array_statistic[0][0] = array[0];
+  array_statistic[0][1] = 1;
+  for (loop = 1; loop < length; loop++)
+  {
+    if (array_statistic[position][0] == array[loop])
+    {
+      array_statistic[position][1]++;
+    }
+    else
+    {
+      position++;
+      array_statistic[position][0] = array[loop];
+      array_statistic[position][1] = 1;
+    }
+    //array_statistic[loop][1] = 0;
+  }
+  for (loop = 0; loop < counter; loop++)
+  {
+    printf("%5d, %5d\n", array_statistic[loop][0], array_statistic[loop][1]);
+  }
+}
 
 int main(int argc, char **argv)
 {
   int loop = 0;
   int loop2 = 0;
-  int in_length = 64;
-  int combine_length = 4;
-  int permutation_length = 8;
+  int in_length = 32;
+  int combine_length = 6;
+  int permutation_length = 6;
   char array_original[in_length];
   fillArrayWithNumbers(array_original, in_length, 1);
   char array[in_length];
@@ -210,6 +309,7 @@ int main(int argc, char **argv)
   int array_counter[all_possibilities];
   for (loop2 = 0; loop2 < all_possibilities; loop2++)
   {
+    if (loop2 % 10000 == 0){printf("%d\n", loop2);}
     copyArrayFromTo(array_original, array, in_length);
     fillArrayWithNumbers(array_finish, in_length, 0);
     for (loop = 0; (loop < 100000) && !checkIfArraysEqual(array_finish, array_original, in_length); loop++)
@@ -218,11 +318,13 @@ int main(int argc, char **argv)
       //printCharArray(array_finish, in_length);
       copyArrayFromTo(array_finish, array, in_length);
     }
-    printCharArray(array_combine, combine_length, 0);
-    printf("loop=%d\n",loop);
+    //printCharArray(array_combine, combine_length, 0); printf("loop=%d\n",loop);
     array_counter[loop2] = loop;
     incrementArrayByOne(array_combine, combine_length, permutation_length);
   }
-  printf("min=%d   max=%d\n", getMinOfArray(array_counter, all_possibilities), getMaxOfArray(array_counter, all_possibilities));
+  //printf("min=%d   max=%d\n", getMinOfArray(array_counter, all_possibilities), getMaxOfArray(array_counter, all_possibilities));
+  //printIntArray(array_counter, all_possibilities, 1);
+  getStatisticOfArray(array_counter, all_possibilities);
+  //printIntArray(array_counter, all_possibilities, 1);
   return 0;
 }
