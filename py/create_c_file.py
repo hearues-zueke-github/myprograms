@@ -11,8 +11,8 @@ def main():
 			    "cpp|c++|CPP|C++ for C++-Language")
 		return 1
 	#end if
-	fileout = open(sys.argv[1], "w")
-	if sys.argv[2] == "c" or sys.argv[2] == "C":
+	fileout = open(sys.argv[2], "w")
+	if sys.argv[1] == "c" or sys.argv[1] == "C":
 		fileout.write("#include <stdio.h>\n\n")
 		fileout.write("int main(int argc, char **argv)\n{\n")
 		fileout.write("  return 0;\n")

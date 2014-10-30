@@ -7,14 +7,10 @@ def main():
   if len(sys.argv) < 3 and False:
     print("FALSE")
   # if
-  a = createArray(4)
-  a2 = createArrayInArray(a, 6)
-  a3 = createArrayInArray(a2, 5)
-  a4 = createArrayInArray(a3, 3)
-  printArray(a, 1, 1)
-  printArray(a2, 2, 2)
-  printArray(a3, 3, 2)
-  printArray(a4, 3, 2)
+  array = createArray(9)
+  array2D = createArrayInArray(a, 9)
+  printArray(array, 1, 1)
+  printArray(array2D, 2, 2)
   return 0
 # main
 
@@ -66,7 +62,7 @@ def printArray(array, dimension = 1, maxdimension = 1):
         # if
         else:
           printArray(array[loop], dimension - 1, maxdimension)
-        #else
+        # else
       # for
       if dimension == maxdimension:
         print("")
