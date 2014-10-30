@@ -113,7 +113,7 @@ int main(int argc, char **argv)
   printCharArray(array, IN_LENGTH);
   char array_finish[IN_LENGTH];
   int loop = 0;
-  for (loop = 0; loop < 10000; loop++)
+  for (loop = 0; loop < 1000000; loop++)
   {
     getPermutationArray(array, IN_LENGTH, array_combine, COMBINE_LENGTH, array_finish, temp_array, PERMUTATION_LENGTH);
     printCharArray(array_finish, IN_LENGTH);
