@@ -58,8 +58,8 @@
 #define ERR_FILE_NOT_CORRECT 4
 
 void waitForEnter();
-size_t fileSize(FILE *file);
 void printArrayOneDimension(unsigned char *array, int array_length);
+size_t fileSize(FILE *file);
 int gcd(int n1, int n2);
 void printMatrix(unsigned char matrix[MS][MS][MS][MS], int length);
 
@@ -253,14 +253,6 @@ void waitForEnter()
   {
   }
 }
-size_t fileSize(FILE *file)
-{
-  size_t offset = ftell(file);
-  fseek(file, 0, SEEK_END);
-  size_t size = ftell(file);
-  fseek(file, SEEK_SET, offset);
-  return size;
-}
 void printArrayOneDimension(unsigned char *array, int array_length)
 {
   int loop;
@@ -269,6 +261,14 @@ void printArrayOneDimension(unsigned char *array, int array_length)
   {
     printf("array[%d] = %d\n", loop, array[loop]);
   }
+}
+size_t fileSize(FILE *file)
+{
+  size_t offset = ftell(file);
+  fseek(file, 0, SEEK_END);
+  size_t size = ftell(file);
+  fseek(file, SEEK_SET, offset);
+  return size;
 }
 int gcd(int n1, int n2)
 {
