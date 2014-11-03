@@ -7,16 +7,25 @@ def main():
   if len(sys.argv) < 3 and False:
     print("FALSE")
   # if
-  array = createArray(9)
-  array2D = createArrayInArray(a, 9)
-  printArray(array, 1, 1)
-  printArray(array2D, 2, 2)
+  #array = createArrayInArray(0, 9)
+  # array2D = createArrayInArray(array, 9)
+  # printArray(array, 1, 1)
+  # printArray(array2D, 2, 2)
+  array_sudoku_number = 3
+  array_sudoku = createSudoku2NumberArray(array_sudoku_number)
+  print(str(array_sudoku))
+  loop = 1
+  while loop < array_sudoku_number:
+    loop2 = loop + 1
+    while loop2 <= array_sudoku_number:
+      array_sudoku_temp = replaceArray2Values(array_sudoku, loop, loop2)
+      print(str(array_sudoku_temp))
+      loop2 += 1
+    # while
+    loop += 1
+  # while
   return 0
 # main
-
-def hallo():
-  print("Hello World!")
-# hallo
 
 def createArray(length):
   loop = 0
@@ -70,6 +79,40 @@ def printArray(array, dimension = 1, maxdimension = 1):
     # if
   # if
 # print Array
+
+def createSudoku2NumberArray(number = 1):
+  array = []
+  loop = 1
+  while loop < number + 1:
+    loop2 = loop
+    while loop2 < number + 1:
+      if loop2 == loop:
+        array.append(loop)
+      # if
+      else:
+        array.append(loop)
+        array.append(loop2)
+      # else
+      loop2 += 1
+    # while
+    loop += 1
+  # while
+  return array
+# createSudoku2NumberArray
+
+def replaceArray2Values(array, num1, num2):
+  loop = 0
+  while loop < len(array):
+    if array[loop] == num1:
+      array[loop] = num2
+    # if
+    elif array[loop] == num2:
+      array[loop] = num1
+    # elif
+    loop += 1
+  # while
+  return array
+# replaceArray2Values
 
 if __name__ == "__main__":
   main()
