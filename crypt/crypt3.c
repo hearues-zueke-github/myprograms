@@ -57,6 +57,8 @@
 #define ERR_FILE_NOT_FOUND 3
 #define ERR_FILE_NOT_CORRECT 4
 
+typedef unsigned char uchar;
+
 void waitForEnter();
 void printArrayOneDimension(unsigned char *array, int array_length);
 size_t fileSize(FILE *file);
