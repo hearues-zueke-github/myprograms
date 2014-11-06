@@ -1,4 +1,4 @@
-SOURCE = crypt3v07.c
+SOURCE = crypt3vf01.c
 BINARY = crypt3
 
 CC = gcc

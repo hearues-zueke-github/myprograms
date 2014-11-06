@@ -40,7 +40,7 @@
 #define TRUE 1
 #define FALSE 0
 #define FILE_CRYPT_SIZE_MAX 4194304
-#define PRINT_OUT_MODE 1
+#define PRINT_OUT_MODE 0
 #define PRINT_MATRIX 0
 #define B1 0x1
 #define B2 0x3
@@ -53,6 +53,10 @@
 // VERY IMPORTANT !!!! Matrix Size!
 #define MS 4
 #define MATRIX_LENGTH MS*MS*MS*MS
+#define ML1 MS
+#define ML2 MS*MS
+#define ML3 MS*MS*MS
+#define ML4 MS*MS*MS*MS
 
 #define ERR_WRONG_USAGE 1
 #define ERR_WRONG_CRYPT_MODUS 2
@@ -64,13 +68,9 @@
 #define ERRMSG_CRYPT_FILE_NOT_FOUND "<file_crypt> not found!\n"
 #define ERRMSG_CRYPT_FILE_TOO_BIG "Crypt File is too big! It should not be bigger than 4 MiB!\n"
 
-typedef unsigned char uchar;
+#define ERRMSG_WRONG_ENCRYPTED_FILE "Something is wrong with the File! Maybe not a encrypted File???\n"
 
-void waitForEnter();
-void printArrayOneDimension(uchar *array, int array_length);
-size_t fileSize(FILE *file);
-int gcd(int n1, int n2);
-void printMatrix(uchar matrix[MS][MS][MS][MS], int length);
+typedef unsigned char uchar;
 
 void encryptionmodus(uchar matrix[MS][MS][MS][MS], uchar *crypt, long long crypt_size, int argc, char **argv);
 void decryptionmodus(uchar matrix[MS][MS][MS][MS], uchar *crypt, long long crypt_size, int argc, char **argv);
@@ -103,10 +103,16 @@ void decrementdecryption(uchar matrix[MS][MS][MS][MS], int b1, int b2, int b3, i
 void shiftdecryption(uchar matrix[MS][MS][MS][MS], int b1, int b2, int b3, int b4);
 void invertdecryption(uchar matrix[MS][MS][MS][MS], int b1, int b2, int b3, int b4);
 
-void (*functionsencryption[])(uchar [MS][MS][MS][MS], int, int, int, int) =
+void waitForEnter();
+void printArrayOneDimension(uchar *array, int array_length);
+size_t fileSize(FILE *file);
+int gcd(int n1, int n2);
+void printMatrix(uchar matrix[MS][MS][MS][MS], int length);
+
+void (*functionsencryption[4])(uchar [MS][MS][MS][MS], int, int, int, int) =
 {&incrementencryption, &decrementencryption, &shiftencryption, &invertencryption};
-void (*functionsdecryption[])(uchar [MS][MS][MS][MS], int, int, int, int) =
-{&incrementdecryption, &decrementdecryption, &shiftdecryption, &invertdecryption};
+void (*functionsdecryption[4])(uchar [MS][MS][MS][MS], int, int, int, int) =
+{&decrementdecryption, &incrementdecryption, &shiftdecryption, &invertdecryption};
 
 int main (int argc, char **argv)
 {
@@ -115,6 +121,7 @@ int main (int argc, char **argv)
   uchar crypt[1024*1024*4];
   uchar matrix[MS][MS][MS][MS];
   long file_crypt_size;
+  FILE *file_crypt;
   // Check for argument count
   if (argc < 4)
   {
@@ -139,7 +146,7 @@ int main (int argc, char **argv)
     flag_cryptmodus = 2;
   }
   // Do open the crypt File
-  FILE *file_crypt = fopen(argv[2], "rb");
+  file_crypt = fopen(argv[2], "rb");
   // If the crypt File not exist, return Value "Crypt file not found!"
   if (file_crypt == NULL)
   {
@@ -174,96 +181,14 @@ int main (int argc, char **argv)
   return 0;
 }
 
-void waitForEnter()
-{
-  printf("Press ENTER to exit...");
-  while(getchar() != '\n')
-  {
-  }
-}
-void printArrayOneDimension(uchar *array, int array_length)
-{
-  int loop;
-  printf("Print the array:\n");
-  for (loop = 0; loop < array_length; loop++)
-  {
-    printf("array[%d] = %d\n", loop, array[loop]);
-  }
-}
-size_t fileSize(FILE *file)
-{
-  size_t offset = ftell(file);
-  fseek(file, 0, SEEK_END);
-  size_t size = ftell(file);
-  fseek(file, SEEK_SET, offset);
-  return size;
-}
-int gcd(int n1, int n2)
-{
-  int number;
-  if (n1 == n2)
-  {
-    return 0;
-  }
-  else
-  {
-    if (n1 < n2)
-    {
-      number = n1;
-      n1 = n2;
-      n2 = number;
-    }
-    while (n2 > 0)
-    {
-      number = n1 % n2;
-      n1 = n2;
-      n2 = number;
-    }
-  }
-  return n1;
-}
-void printMatrix(uchar matrix[MS][MS][MS][MS], int length)
-{
-  int loop = 0;
-  for (loop = 0; loop < 16; loop++)
-  {
-    if (loop != 0)
-    {
-      printf(" \033[31m%02x\033[49m", loop);
-    }
-    else
-    {
-      printf("%*s \033[31m%02x\033[49m", 6, " ", loop);
-    }
-  }
-  printf("\n");
-  for (loop = 0; loop < length; loop++)
-  {
-    if ((loop != 0) && (loop % 16 != 0))
-    {
-      if (loop % 16 != 15)
-      {
-        printf(" \033[39m%02x", matrix[(loop / (MS*MS*MS)) % MS][(loop / (MS*MS)) % MS][(loop / MS) % MS][loop % MS]);
-      }
-      else
-      {
-        printf(" \033[39m%02x\n", matrix[(loop / (MS*MS*MS)) % MS][(loop / (MS*MS)) % MS][(loop / MS) % MS][loop % MS]);
-      }
-    }
-    else
-    {
-      printf("\033[32m0x%02x   \033[39m%02x", loop / 16, matrix[(loop / (MS*MS*MS)) % MS][(loop / (MS*MS)) % MS][(loop / MS) % MS][loop % MS]);
-    }
-  }
-  printf("\n");
-}
-
 void encryptionmodus(uchar matrix[MS][MS][MS][MS], uchar *crypt, long long crypt_size, int argc, char **argv)
 {
   long long file_in_size;
   long long file_in_position;
-  int loop_file = 3;
-  while (loop_file < argc) {
+  int pos = 0;
+  int loop = 0;
+  int loop_file = 0;
+  for (loop_file = 3; loop_file < argc; loop_file++) {
     FILE *file_in = fopen(argv[loop_file], "rb");
     system("[ -d encryption_files ] || mkdir encryption_files\n");
     char filenamedest[strlen(argv[loop_file]) + 19];
@@ -272,26 +197,23 @@ void encryptionmodus(uchar matrix[MS][MS][MS][MS], uchar *crypt, long long crypt
     FILE *file_out = fopen(filenamedest, "wb");
     if (file_in != NULL) {
       file_in_size = fileSize(file_in);
-      int loop = 8;
-      while (loop > 0)
+      for (loop = 8; loop > 0; loop--)
       {
         fputc((file_in_size >> (8 * (loop - 1))) & 0xFF, file_out);
-        loop--;
       }
       file_in_position = file_in_size;
       while (file_in_position > 0) {
-        int pos = 0;
-        // read in
-        for(; (pos < (MS*MS*MS*MS)) && (file_in_position - pos > 0); pos++) {
-          matrix[(pos / (MS*MS*MS)) % MS][(pos / (MS*MS)) % MS][(pos / MS) % MS][pos % MS] = fgetc(file_in);
+        // read in#
+        for(pos = 0; (pos < (ML4)) && (file_in_position - pos > 0); pos++) {
+          matrix[(pos / (ML3)) % MS][(pos / (ML2)) % MS][(pos / ML1) % MS][pos % MS] = fgetc(file_in);
         }
         file_in_position -= pos;
         // check, if last pos is MS*MS*MS*MS (e.g. for MS = 4 is MS^4 = 256)
-        if (pos != (MS*MS*MS*MS))
+        if (pos != (ML4))
         {
           int loop_fill_rest = pos;
-          while (loop_fill_rest < (MS*MS*MS*MS)) {
-            matrix[(loop_fill_rest / (MS*MS*MS)) % MS][(loop_fill_rest / (MS*MS)) % MS][(loop_fill_rest / MS) % MS][loop_fill_rest % MS] = 0;
+          while (loop_fill_rest < (ML4)) {
+            matrix[(loop_fill_rest / (ML3)) % MS][(loop_fill_rest / (ML2)) % MS][(loop_fill_rest / ML1) % MS][loop_fill_rest % MS] = 0;
             loop_fill_rest++;
           }
         }
@@ -308,8 +230,8 @@ void encryptionmodus(uchar matrix[MS][MS][MS][MS], uchar *crypt, long long crypt
         // write out
         if (pos > 0) {
           int loop = 0;
-          while (loop < (MS*MS*MS*MS)) {
-            fputc(matrix[(loop / (MS*MS*MS)) % MS][(loop / (MS*MS)) % MS][(loop / MS) % MS][loop % MS], file_out);
+          while (loop < (ML4)) {
+            fputc(matrix[(loop / (ML3)) % MS][(loop / (ML2)) % MS][(loop / ML1) % MS][loop % MS], file_out);
             loop++;
           }
         }
@@ -320,16 +242,19 @@ void encryptionmodus(uchar matrix[MS][MS][MS][MS], uchar *crypt, long long crypt
     else
     {
       printf("File %s is not found!\n", argv[loop_file]);
-    }  
-    loop_file++;
+    }
   } // end while
 }
 void decryptionmodus(uchar matrix[MS][MS][MS][MS], uchar *crypt, long long crypt_size, int argc, char **argv)
 {
   long long file_in_size;
   long long file_in_position;
-  int loop_file = 3;
-  while (loop_file < argc) {
+  long long file_size_number;
+  int pos = 0;
+  int loop = 0;
+  int loop_file = 0;
+  int shift = 0;
+  for (loop_file = 3; loop_file < argc; loop_file++) {
     FILE *file_in = fopen(argv[loop_file], "rb");
     system("[ -d decryption_files ] || mkdir decryption_files\n");
     char filenamedest[strlen(argv[loop_file]) + 19];
@@ -338,8 +263,7 @@ void decryptionmodus(uchar matrix[MS][MS][MS][MS], uchar *crypt, long long crypt
     FILE *file_out = fopen(filenamedest, "wb");
     if (file_in != NULL) {
       file_in_size = fileSize(file_in);
-      int file_size_number = 0;
-      int shift;
+      file_size_number = 0;
       for (shift = 8; shift > 0; shift--)
       {
         file_size_number += (fgetc(file_in) & 0xFF) << (8 * (shift - 1));
@@ -347,10 +271,9 @@ void decryptionmodus(uchar matrix[MS][MS][MS][MS], uchar *crypt, long long crypt
       file_in_position = file_in_size - 8;
       if (file_size_number <= file_in_position) {
         while (file_in_position > 0) {
-          int pos = 0;
           // read in
-          for(; (pos < (MS*MS*MS*MS)) && (file_in_position - pos) > 0; pos++) {
-            matrix[(pos / (MS*MS*MS)) % MS][(pos / (MS*MS)) % MS][(pos / MS) % MS][pos % MS] = fgetc(file_in);
+          for (pos = 0; (pos < (ML4)) && (file_in_position - pos) > 0; pos++) {
+            matrix[(pos / (ML3)) % MS][(pos / (ML2)) % MS][(pos / ML1) % MS][pos % MS] = fgetc(file_in);
           }
           // decrypt algorithm
           if (PRINT_MATRIX)
@@ -365,17 +288,15 @@ void decryptionmodus(uchar matrix[MS][MS][MS][MS], uchar *crypt, long long crypt
           // write out
           file_in_position -= pos;
           if (pos > 0) {
-            int loop = 0;
-            while (loop < pos) {
-              fputc(matrix[(loop / (MS*MS*MS)) % MS][(loop / (MS*MS)) % MS][(loop / MS) % MS][loop % MS], file_out);
-              loop++;
+            for (loop = 0; loop < pos; loop++) {
+              fputc(matrix[(loop / (ML3)) % MS][(loop / (ML2)) % MS][(loop / ML1) % MS][loop % MS], file_out);
             }
           }
         }
       }
       else
       {
-        printf("Something is wrong with the File! Maybe not a encrypted File???\n");
+        printf(ERRMSG_WRONG_ENCRYPTED_FILE);
       }
       fclose(file_in);
       fclose(file_out);
@@ -384,7 +305,6 @@ void decryptionmodus(uchar matrix[MS][MS][MS][MS], uchar *crypt, long long crypt
     {
       printf("File %s is not found!\n", argv[loop_file]);
     }  
-    loop_file++;
   }  // end while
 }
 
@@ -399,13 +319,11 @@ void encryptionfunctions(uchar matrix[MS][MS][MS][MS], uchar *crypt, int crypt_s
     b2 = crypt[loop + 1];
     b3 = crypt[loop + 2];
     b4 = crypt[loop + 3];
-    switch ((b1 >> 6) & B2)
+    if ((PRINT_OUT_MODE == 1) && ((loop / 4) % 16 == 0) && (loop != 0))
     {
-      case 0: functionsencryption[0](matrix, b1, b2, b3, b4); break;
-      case 1: functionsencryption[1](matrix, b1, b2, b3, b4); break;
-      case 2: functionsencryption[2](matrix, b1, b2, b3, b4); break;
-      case 3: functionsencryption[3](matrix, b1, b2, b3, b4); break;
+      printf("\n");
     }
+    functionsencryption[(b1 >> 6) & B2](matrix, b1, b2, b3, b4);
     loop += 4;
   }
   if (PRINT_OUT_MODE == 1) {printf("\n");}
@@ -422,13 +340,11 @@ void decryptionfunctions(uchar matrix[MS][MS][MS][MS], uchar *crypt, int crypt_s
     b2 = crypt[(loop - 1) + 1];
     b3 = crypt[(loop - 1) + 2];
     b4 = crypt[(loop - 1) + 3];
-    switch ((b1 >> 6) & B2)
+    if ((PRINT_OUT_MODE == 1) && (((loop + 4) / 4) % 16 == 0))
     {
-      case 0: functionsdecryption[1](matrix, b1, b2, b3, b4); break;
-      case 1: functionsdecryption[0](matrix, b1, b2, b3, b4); break;
-      case 2: functionsdecryption[2](matrix, b1, b2, b3, b4); break;
-      case 3: functionsdecryption[3](matrix, b1, b2, b3, b4); break;
+      printf("\n");
     }
+    functionsdecryption[(b1 >> 6) & B2](matrix, b1, b2, b3, b4);
     loop -= 4;
   }
   if (PRINT_OUT_MODE == 1) {printf("\n");}
@@ -1384,4 +1300,88 @@ void invertdecryption(uchar matrix[MS][MS][MS][MS], int b1, int b2, int b3, int 
       }
     } // end else if
   } // end for
+}
+
+void waitForEnter()
+{
+  printf("Press ENTER to exit...");
+  while(getchar() != '\n')
+  {
+  }
+}
+void printArrayOneDimension(uchar *array, int array_length)
+{
+  int loop;
+  printf("Print the array:\n");
+  for (loop = 0; loop < array_length; loop++)
+  {
+    printf("array[%d] = %d\n", loop, array[loop]);
+  }
+}
+size_t fileSize(FILE *file)
+{
+  size_t offset = ftell(file);
+  fseek(file, 0, SEEK_END);
+  size_t size = ftell(file);
+  fseek(file, SEEK_SET, offset);
+  return size;
+}
+int gcd(int n1, int n2)
+{
+  int number;
+  if (n1 == n2)
+  {
+    return 0;
+  }
+  else
+  {
+    if (n1 < n2)
+    {
+      number = n1;
+      n1 = n2;
+      n2 = number;
+    }
+    while (n2 > 0)
+    {
+      number = n1 % n2;
+      n1 = n2;
+      n2 = number;
+    }
+  }
+  return n1;
+}
+void printMatrix(uchar matrix[MS][MS][MS][MS], int length)
+{
+  int loop = 0;
+  for (loop = 0; loop < 16; loop++)
+  {
+    if (loop != 0)
+    {
+      printf(" \033[31m%02x\033[49m", loop);
+    }
+    else
+    {
+      printf("%*s \033[31m%02x\033[49m", 6, " ", loop);
+    }
+  }
+  printf("\n");
+  for (loop = 0; loop < length; loop++)
+  {
+    if ((loop != 0) && (loop % 16 != 0))
+    {
+      if (loop % 16 != 15)
+      {
+        printf(" \033[39m%02x", matrix[(loop / (ML3)) % MS][(loop / (ML2)) % MS][(loop / ML1) % MS][loop % MS]);
+      }
+      else
+      {
+        printf(" \033[39m%02x\n", matrix[(loop / (ML3)) % MS][(loop / (ML2)) % MS][(loop / ML1) % MS][loop % MS]);
+      }
+    }
+    else
+    {
+      printf("\033[32m0x%02x   \033[39m%02x", loop / 16, matrix[(loop / (ML3)) % MS][(loop / (ML2)) % MS][(loop / ML1) % MS][loop % MS]);
+    }
+  }
+  printf("\n");
 }
