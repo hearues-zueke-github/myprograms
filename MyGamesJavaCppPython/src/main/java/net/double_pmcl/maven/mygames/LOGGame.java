@@ -36,12 +36,13 @@ public class LOGGame extends JFrame {
     private int l_frame = 200;
     private int x_btn = fieldsizenow;
     private int y_btn = fieldsizenow;
-    private int h_btn = 50;
-    private int w_btn = 50;
+    private int h_btn = 100;
+    private int w_btn = h_btn;
+//    private int w_btn = 50;
     private int t_btn = 15;
     private int l_btn = 20;
     private int y_btncolor = colormax - 1;
-    private int timesleep = 10;
+    private int timesleep = 50;
     private int fontsizebtnlist;
     private List<List<Byte>> gamefieldlist = new ArrayList<>();
     private List<List<JButton>> btnlist = new ArrayList<>();
@@ -66,6 +67,8 @@ public class LOGGame extends JFrame {
     private JMenuItem menuitemexit = new JMenuItem("Exit");
     private JMenuItem menuitemsolveupdown = new JMenuItem("Solve from up to down");
     private JMenuItem menuitemsolvedownup = new JMenuItem("Solve from down to up");
+    private JMenuItem menuitemsolveleftright = new JMenuItem("Solve from left to right");
+    private JMenuItem menuitemsolverightleft = new JMenuItem("Solve from right to left");
     private JMenuItem menuitemsolveupanddown = new JMenuItem("Solve Up and Down many times");
     private JMenuItem menuitemshowanimation = new JMenuItem("Show Animation");
     private JMenuItem menuitemsetfontsmaller = new JMenuItem("Set Font smaller");
@@ -222,10 +225,16 @@ public class LOGGame extends JFrame {
         menuitemsolvedownup.setFocusable(true);
         menuitemsolvedownup.addKeyListener(new MenuItemSolveDownUp_Key());
         menusolve.add(menuitemsolvedownup);
+        menuitemsolveleftright.addActionListener(new MenuItemSolveLeftRight_Click());
+        menuitemsolveleftright.addKeyListener(null);
+        menusolve.add(menuitemsolveleftright);
+        menuitemsolverightleft.addActionListener(new MenuItemSolveRightLeft_Click());
+        menuitemsolverightleft.addKeyListener(null);
+        menusolve.add(menuitemsolverightleft);
         menuitemsolveupanddown.addActionListener(new MenuItemSolveUpAndDown_Click());
         menusolve.add(menuitemsolveupanddown);
-        menuitemshowanimation.setBackground(colormenuitemlist.get(0));
         menusolve.add(separator3);
+        menuitemshowanimation.setBackground(colormenuitemlist.get(0));
         menuitemshowanimation.addActionListener(new MenuItemShowAnimation_Click());
         menusolve.add(menuitemshowanimation);
         menubar.add(menusolve);
@@ -266,14 +275,14 @@ public class LOGGame extends JFrame {
 
     public void refreshFieldPosition() {
         if (fieldsizenow <= 10) {
+            h_btn = 60;
+            w_btn = 60;
+        } else if (fieldsizenow <= 20) {
             h_btn = 50;
             w_btn = 50;
-        } else if (fieldsizenow <= 20) {
-            h_btn = 40;
-            w_btn = 40;
         } else if (fieldsizenow <= 30) {
-            h_btn = 30;
-            w_btn = 30;
+            h_btn = 35;
+            w_btn = 35;
         }
         for (int j = 0; j < fieldsizemax; j++) {
             for (int i = 0; i < fieldsizemax; i++) {
@@ -539,33 +548,109 @@ public class LOGGame extends JFrame {
         }
     }
 
+    public void solveUpToDown() {
+        for (int j = 1; j < fieldsizenow; j++) {
+            for (int i = 0; i < fieldsizenow; i++) {
+                try {
+                    if (gamefieldlist.get(j - 1).get(i).intValue() != 0) {
+                        btnlist.get(j).get(i).setBackground(Color.magenta);
+                        if (issolveanimationon) {
+                            Thread.sleep(timesleep);
+                        }
+                        btnlist.get(j).get(i).setBackground(colorlist.get(colornow - 2).get(gamefieldlist.get(j).get(i).intValue()));
+                        while (gamefieldlist.get(j - 1).get(i).equals((byte) 0) != true) {
+                            changeFieldColorCross(i, j);
+                            refreshFieldButtons();
+                        }
+                        if (issolveanimationon) {
+                            Thread.sleep(timesleep);
+                        }
+                    }
+                } catch (Exception ex) {
+                }
+            }
+        }
+    }
+
+    private void solveDownToUp() {
+        for (int j = fieldsizenow - 2; j >= 0; j--) {
+            for (int i = fieldsizenow - 1; i >= 0; i--) {
+                try {
+                    if (gamefieldlist.get(j + 1).get(i).intValue() != 0) {
+                        btnlist.get(j).get(i).setBackground(Color.magenta);
+                        if (issolveanimationon) {
+                            Thread.sleep(timesleep);
+                        }
+                        btnlist.get(j).get(i).setBackground(colorlist.get(colornow - 2).get(gamefieldlist.get(j).get(i).intValue()));
+                        while (gamefieldlist.get(j + 1).get(i).equals((byte) 0) != true) {
+                            changeFieldColorCross(i, j);
+                            refreshFieldButtons();
+                        }
+                        if (issolveanimationon) {
+                            Thread.sleep(timesleep);
+                        }
+                    }
+                } catch (Exception ex) {
+                }
+            }
+        }
+    }
+
+    private void solveLeftToRight() {
+        for (int i = 1; i < fieldsizenow; i++) {
+            for (int j = 0; j < fieldsizenow; j++) {
+                try {
+                    if (gamefieldlist.get(j).get(i-1).intValue() != 0) {
+                        btnlist.get(j).get(i).setBackground(Color.magenta);
+                        if (issolveanimationon) {
+                            Thread.sleep(timesleep);
+                        }
+                        btnlist.get(j).get(i).setBackground(colorlist.get(colornow - 2).get(gamefieldlist.get(j).get(i).intValue()));
+                        while (gamefieldlist.get(j).get(i-1).equals((byte) 0) != true) {
+                            changeFieldColorCross(i, j);
+                            refreshFieldButtons();
+                        }
+                        if (issolveanimationon) {
+                            Thread.sleep(timesleep);
+                        }
+                    }
+                } catch (Exception ex) {
+                }
+            }
+        }
+    }
+
+    private void solveRightToLeft() {
+        for (int i = fieldsizenow - 2; i >= 0; i--) {
+            for (int j = fieldsizenow - 1; j >= 0; j--) {
+                try {
+                    if (gamefieldlist.get(j).get(i+1).intValue() != 0) {
+                        btnlist.get(j).get(i).setBackground(Color.magenta);
+                        if (issolveanimationon) {
+                            Thread.sleep(timesleep);
+                        }
+                        btnlist.get(j).get(i).setBackground(colorlist.get(colornow - 2).get(gamefieldlist.get(j).get(i).intValue()));
+                        while (gamefieldlist.get(j).get(i+1).equals((byte) 0) != true) {
+                            changeFieldColorCross(i, j);
+                            refreshFieldButtons();
+                        }
+                        if (issolveanimationon) {
+                            Thread.sleep(timesleep);
+                        }
+                    }
+                } catch (Exception ex) {
+                }
+            }
+        }
+    }
+
     class MenuItemSolveUpDown_Click implements ActionListener {
         @Override
         public void actionPerformed(ActionEvent e) {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    for (int j = 1; j < fieldsizenow; j++) {
-                        for (int i = 0; i < fieldsizenow; i++) {
-                            try {
-                                if (gamefieldlist.get(j - 1).get(i).intValue() != 0) {
-                                    btnlist.get(j).get(i).setBackground(Color.magenta);
-                                    if (issolveanimationon) {
-                                        Thread.sleep(timesleep);
-                                    }
-                                    btnlist.get(j).get(i).setBackground(colorlist.get(colornow - 2).get(gamefieldlist.get(j).get(i).intValue()));
-                                    while (gamefieldlist.get(j - 1).get(i).equals((byte) 0) != true) {
-                                        changeFieldColorCross(i, j);
-                                        refreshFieldButtons();
-                                    }
-                                    if (issolveanimationon) {
-                                        Thread.sleep(timesleep);
-                                    }
-                                }
-                            } catch (Exception ex) {
-                            }
-                        }
-                    }
+                    solveUpToDown();
                 }
             }).start();
         }
@@ -577,27 +662,31 @@ public class LOGGame extends JFrame {
             new Thread(new Runnable() {
                 @Override
                 public void run() {
-                    for (int j = fieldsizenow - 2; j >= 0; j--) {
-                        for (int i = fieldsizenow - 1; i >= 0; i--) {
-                            try {
-                                if (gamefieldlist.get(j + 1).get(i).intValue() != 0) {
-                                    btnlist.get(j).get(i).setBackground(Color.magenta);
-                                    if (issolveanimationon) {
-                                        Thread.sleep(timesleep);
-                                    }
-                                    btnlist.get(j).get(i).setBackground(colorlist.get(colornow - 2).get(gamefieldlist.get(j).get(i).intValue()));
-                                    while (gamefieldlist.get(j + 1).get(i).equals((byte) 0) != true) {
-                                        changeFieldColorCross(i, j);
-                                        refreshFieldButtons();
-                                    }
-                                    if (issolveanimationon) {
-                                        Thread.sleep(timesleep);
-                                    }
-                                }
-                            } catch (Exception ex) {
-                            }
-                        }
-                    }
+                    solveDownToUp();
+                }
+            }).start();
+        }
+    }
+
+    class MenuItemSolveLeftRight_Click implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    solveLeftToRight();
+                }
+            }).start();
+        }
+    }
+
+    class MenuItemSolveRightLeft_Click implements ActionListener {
+        @Override
+        public void actionPerformed(ActionEvent e) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    solveRightToLeft();
                 }
             }).start();
         }
@@ -635,26 +724,11 @@ public class LOGGame extends JFrame {
         @Override
         public void actionPerformed(ActionEvent e) {
             for (int k = 0; k < 100; k++) {
-                for (int j = fieldsizenow - 2; j >= 0; j--) {
-                    for (int i = fieldsizenow - 1; i >= 0; i--) {
-                        btnlist.get(j).get(i).setBackground(Color.magenta);
-                        btnlist.get(j).get(i).setBackground(colorlist.get(colornow - 2).get(gamefieldlist.get(j).get(i).intValue()));
-                        while (gamefieldlist.get(j + 1).get(i).equals((byte) 0) != true) {
-                            changeFieldColorCross(i, j);
-                            refreshFieldButtons();
-                        }
-                    }
-                }
-                for (int j = 1; j < fieldsizenow; j++) {
-                    for (int i = 0; i < fieldsizenow; i++) {
-                        btnlist.get(j).get(i).setBackground(Color.magenta);
-                        btnlist.get(j).get(i).setBackground(colorlist.get(colornow - 2).get(gamefieldlist.get(j).get(i).intValue()));
-                        while (gamefieldlist.get(j - 1).get(i).equals((byte) 0) != true) {
-                            changeFieldColorCross(i, j);
-                            refreshFieldButtons();
-                        }
-                    }
-                }
+                changeFieldColorCross(0, 0);
+                solveUpToDown();
+                solveLeftToRight();
+                solveDownToUp();
+                solveRightToLeft();
             }
         }
     }
