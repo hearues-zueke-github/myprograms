@@ -1,4 +1,4 @@
-package net.pimathclanguage.rotationpuzzle;
+package net.double_pmcl.maven.mygames;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -22,7 +22,7 @@ import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import lombok.Getter;
 import lombok.Setter;
-import net.pimathclanguage.rotationpuzzle.Tuple.Tuple3;
+import net.double_pmcl.maven.mygames.Tuple.Tuple3;
 
 public class RotationPuzzle extends JFrame implements KeyListener
 {

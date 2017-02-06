@@ -1,4 +1,4 @@
-// package jframelightoffgame;
+package net.double_pmcl.maven.mygames;
 
 import java.awt.Color;
 import java.awt.Component;

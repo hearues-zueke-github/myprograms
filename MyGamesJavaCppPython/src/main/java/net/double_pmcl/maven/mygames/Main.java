@@ -1,4 +1,4 @@
-package net.pimathclanguage.rotationpuzzle;
+package net.double_pmcl.maven.mygames;
 
 public class Main
 {
