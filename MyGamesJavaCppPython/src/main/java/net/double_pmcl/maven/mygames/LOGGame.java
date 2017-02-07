@@ -89,7 +89,7 @@ public class LOGGame extends JFrame {
         isnumber = false;
         iscolor = true;
         isgamestarted = false;
-        issolveanimationon = true;
+        issolveanimationon = false;
         fontsizebtnlist = 22;
         h_frame = h_btn * y_btn + t_btn * 2 + 85;
         w_frame = w_btn * x_btn + l_btn * 2;
@@ -219,22 +219,21 @@ public class LOGGame extends JFrame {
         }
         menubar.add(menucolor);
         menuitemsolveupdown.addActionListener(new MenuItemSolveUpDown_Click());
-        menuitemsolveupdown.addKeyListener(null);
+//        menuitemsolveupdown.addKeyListener(null);
         menusolve.add(menuitemsolveupdown);
         menuitemsolvedownup.addActionListener(new MenuItemSolveDownUp_Click());
-        menuitemsolvedownup.setFocusable(true);
-        menuitemsolvedownup.addKeyListener(new MenuItemSolveDownUp_Key());
+//        menuitemsolvedownup.setFocusable(true);
+//        menuitemsolvedownup.addKeyListener(new MenuItemSolveDownUp_Key());
         menusolve.add(menuitemsolvedownup);
         menuitemsolveleftright.addActionListener(new MenuItemSolveLeftRight_Click());
-        menuitemsolveleftright.addKeyListener(null);
         menusolve.add(menuitemsolveleftright);
+        System.out.println("Added menuitemsolveleftright");
         menuitemsolverightleft.addActionListener(new MenuItemSolveRightLeft_Click());
-        menuitemsolverightleft.addKeyListener(null);
         menusolve.add(menuitemsolverightleft);
         menuitemsolveupanddown.addActionListener(new MenuItemSolveUpAndDown_Click());
         menusolve.add(menuitemsolveupanddown);
         menusolve.add(separator3);
-        menuitemshowanimation.setBackground(colormenuitemlist.get(0));
+//        menuitemshowanimation.setBackground(colormenuitemlist.get(0));
         menuitemshowanimation.addActionListener(new MenuItemShowAnimation_Click());
         menusolve.add(menuitemshowanimation);
         menubar.add(menusolve);
