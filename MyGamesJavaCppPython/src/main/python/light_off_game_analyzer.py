@@ -45,17 +45,28 @@ def increase_pix(pix, rate=2):
 
     return new_pix
 
-moves = [(2, 2), (3, 4), (2, 1), (0, 1), (3, 0)]
-for move in moves:
-    j, i = move
-    field = (field+poss_moves[j, i]) % 2
+moves_amount = 10
+moves = [(np.random.randint(0, y), np.random.randint(0, x)) for _ in range(0, moves_amount)]
+
+def do_moves(field, moves, poss_moves):
+    for move in moves:
+        j, i = move
+        field = (field+poss_moves[j, i]) % 2
+
+    return field
+
+field = do_moves(field, moves, poss_moves)
+
+# moves = [(2, 2), (3, 4), (2, 1), (0, 1), (3, 0)]
+# for move in moves:
+#     j, i = move
+#     field = (field+poss_moves[j, i]) % 2
 # field = (field+poss_moves[1, 2]) % 2
 # field = (field+poss_moves[2, 2]) % 2
 
 print("field:\n{}".format(field))
 
 pix = np.zeros((y+2, x+2, 3)).astype(np.uint8)
-print("pix[:, :, 0]:\n{}".format(pix[:, :, 0]))
 pix[:, :, 0] = field
 pix[:, :, 1] = field
 pix *= 255
@@ -69,7 +80,12 @@ pix_new = np.zeros((y, x, 3)).astype(np.int8)
 pix_new[:, :, 0] = pix[1: -1, 1: -1, 0]
 pix_new[:, :, 1] = pix[1: -1, 1: -1, 1]
 pix_new[:, :, 2] = pix[1: -1, 1: -1, 2]
-print("pix_new:\n{}".format(pix_new))
+# print("pix_new:\n{}".format(pix_new))
 pix_larger = increase_pix(pix_new, 50)
 img = Image.fromarray(pix_larger)
 img.show()
+
+def solve_up_down(field, y, x, poss_moves):
+    for j in range(2, y):
+        for i in range(2, x):
+            
