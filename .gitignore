@@ -1,2 +1,4 @@
-*.class
+**/*.class
 .idea/workspace.xml
+**/*.jar
+MyGamesJavaCppPython/.idea
